@@ -1,0 +1,6 @@
+[submodule "src/3rd-party/dependencies-zlib"]
+	path = src/3rd-party/dependencies-zlib
+	url = https://github.com/refresh-bio/dependencies-zlib.git
+[submodule "src/3rd-party/dependencies-zstd"]
+	path = src/3rd-party/dependencies-zstd
+	url = https://github.com/refresh-bio/dependencies-zstd.git

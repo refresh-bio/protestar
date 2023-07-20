@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{1a25a13a-d826-4212-a28c-5c4c9f49a795}</ProjectGuid>
+    <RootNamespace>cifcompressor</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>protestar</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\3rd-party\dependencies-zstd/lib;..\3rd-party\mimalloc\include;..\libs\refresh\archive;..\libs\refresh\compression;..\libs\refresh\range_coder;..\3rd-party\dependencies-zlib;../3rd-party/sajson;../3rd-party/vclclass;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\3rd-party\dependencies-zstd/lib;..\3rd-party\mimalloc\include;..\libs\refresh\archive;..\libs\refresh\compression;..\libs\refresh\range_coder;..\3rd-party\dependencies-zlib;../3rd-party/sajson;../3rd-party/vclclass;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+      <AdditionalOptions>/D_CRT_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\3rd-party\mimalloc\src\static.c" />
+    <ClCompile Include="..\app\main.cpp" />
+    <ClCompile Include="..\common\aa_atoms.cpp" />
+    <ClCompile Include="..\common\atom_extractor.cpp" />
+    <ClCompile Include="..\common\model.cpp" />
+    <ClCompile Include="..\compressors\cif-compressor.cpp" />
+    <ClCompile Include="..\compressors\conf-compressor.cpp" />
+    <ClCompile Include="..\compressors\model_compress.cpp" />
+    <ClCompile Include="..\compressors\pae-compressor.cpp" />
+    <ClCompile Include="..\compressors\pdb-compressor.cpp" />
+    <ClCompile Include="..\compressors\serializer.cpp" />
+    <ClCompile Include="..\compressors\struct-compressor.cpp" />
+    <ClCompile Include="..\core\collection.cpp" />
+    <ClCompile Include="..\core\io.cpp" />
+    <ClCompile Include="..\core\psa_base.cpp" />
+    <ClCompile Include="..\core\psa_compressor.cpp" />
+    <ClCompile Include="..\core\psa_decompression_library.cpp" />
+    <ClCompile Include="..\core\psa_decompressor.cpp" />
+    <ClCompile Include="..\core\utils.cpp" />
+    <ClCompile Include="..\parsers\cif.cpp" />
+    <ClCompile Include="..\parsers\conversion.cpp" />
+    <ClCompile Include="..\parsers\input.cpp" />
+    <ClCompile Include="..\parsers\json.cpp" />
+    <ClCompile Include="..\parsers\pdb.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\3rd-party\dependencies-zlib\zlib.h" />
+    <ClInclude Include="..\3rd-party\dependencies-zstd\lib\zstd.h" />
+    <ClInclude Include="..\common\aa_atoms.h" />
+    <ClInclude Include="..\common\atom_extractor.h" />
+    <ClInclude Include="..\common\defs.h" />
+    <ClInclude Include="..\common\init_model.hpp" />
+    <ClInclude Include="..\common\model.h" />
+    <ClInclude Include="..\common\tetrahedron.h" />
+    <ClInclude Include="..\compressors\cif-compressor.h" />
+    <ClInclude Include="..\compressors\conf-compressor.h" />
+    <ClInclude Include="..\compressors\matrix.h" />
+    <ClInclude Include="..\compressors\model_compress.h" />
+    <ClInclude Include="..\compressors\pae-compressor.h" />
+    <ClInclude Include="..\compressors\pdb-compressor.h" />
+    <ClInclude Include="..\compressors\serializer.h" />
+    <ClInclude Include="..\compressors\struct-compressor.h" />
+    <ClInclude Include="..\core\collection.h" />
+    <ClInclude Include="..\core\io.h" />
+    <ClInclude Include="..\core\params.h" />
+    <ClInclude Include="..\core\psa_base.h" />
+    <ClInclude Include="..\core\psa_compressor.h" />
+    <ClInclude Include="..\core\psa_decompressor.h" />
+    <ClInclude Include="..\core\psa_decompressor_library.h" />
+    <ClInclude Include="..\core\utils.h" />
+    <ClInclude Include="..\core\version.h" />
+    <ClInclude Include="..\libs\refresh\compression\zstd_wrapper.h" />
+    <ClInclude Include="..\libs\refresh\range_coder\rc_engine.h" />
+    <ClInclude Include="..\libs\refresh\tar\tar.h" />
+    <ClInclude Include="..\parsers\cif.h" />
+    <ClInclude Include="..\parsers\columns.h" />
+    <ClInclude Include="..\parsers\conversion.h" />
+    <ClInclude Include="..\parsers\entries.h" />
+    <ClInclude Include="..\parsers\input.h" />
+    <ClInclude Include="..\parsers\json.h" />
+    <ClInclude Include="..\parsers\pdb.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\3rd-party\dependencies-zlib\build\zlib.vcxproj">
+      <Project>{ae29051e-e1d8-3f22-9ca9-64edd3e02ba3}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\3rd-party\dependencies-zstd\build\VS2022\libzstd\libzstd.vcxproj">
+      <Project>{8bfd8150-94d5-4bf9-8a50-7bd9929a0850}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

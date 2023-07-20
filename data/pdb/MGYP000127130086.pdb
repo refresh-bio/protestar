@@ -1,0 +1,54 @@
+HEADER                                            18-OCT-22                     
+TITLE     ESMFOLD V0 PREDICTION FOR MGYP000127130086
+REMARK   1                                                                      
+REMARK   1 REFERENCE 1                                                          
+REMARK   1  AUTH   ZEMING LIN, HALIL AKIN, ROSHAN RAO, BRIAN HIE, ZHONGKAI ZHU, 
+REMARK   1  AUTH 2 WENTING LU, NIKITA SMETANIN, ALLAN DOS SANTOS COSTA, 
+REMARK   1  AUTH 3 MARYAM FAZEL-ZARANDI, TOM SERCU, SALVATORE CANDIDO,
+REMARK   1  AUTH 4 ALEXANDER RIVES                
+REMARK   1  TITL   LANGUAGE MODELS OF PROTEIN SEQUENCES AT THE SCALE OF         
+REMARK   1  TITL 2 EVOLUTION ENABLE ACCURATE STRUCTURE PREDICTION               
+REMARK   1  REF                                                                 
+REMARK   1  REFN                                                                
+REMARK   1  PMID                                                                
+REMARK   1  DOI    10.1101/2022.07.20.500902                                    
+REMARK   1                                                                      
+REMARK   1 LICENSE AND DISCLAIMERS                
+REMARK   1 ESM METAGENOMIC STRUCTURE ATLAS DATA IS AVAILABLE UNDER
+REMARK   1 A CC-BY-4.0 LICENSE FOR ACADEMIC AND COMMERCIAL USE.
+REMARK   1 COPYRIGHT (C) META PLATFORMS, INC. ALL RIGHTS RESERVED.
+REMARK   1 USE OF THE ESM METAGENOMIC STRUCTURE ATLAS DATA IS SUBJECT
+REMARK   1 TO THE META OPEN SOURCE TERMS OF USE AND PRIVACY POLICY.
+
+ATOM      1 N    MET A   1      31.306  -4.918 -17.487  1.00  0.74          N   
+ATOM      2 CA   MET A   1      30.418  -4.611 -18.604  1.00  0.75          C   
+ATOM      3 C    MET A   1      29.273  -3.709 -18.157  1.00  0.74          C   
+ATOM      4 CB   MET A   1      29.861  -5.897 -19.218  1.00  0.71          C   
+ATOM      5 O    MET A   1      28.503  -4.071 -17.265  1.00  0.71          O   
+ATOM      6 CG   MET A   1      30.894  -6.706 -19.987  1.00  0.74          C   
+ATOM      7 SD   MET A   1      30.239  -8.323 -20.555  1.00  0.80          S   
+ATOM      8 CE   MET A   1      30.901  -8.361 -22.244  1.00  0.75          C   
+ATOM      9 N    GLU A   2      29.219  -2.725 -18.800  1.00  0.68          N   
+ATOM     10 CA   GLU A   2      28.042  -1.892 -18.571  1.00  0.67          C   
+ATOM     11 C    GLU A   2      26.785  -2.545 -19.139  1.00  0.68          C   
+ATOM     12 CB   GLU A   2      28.238  -0.504 -19.186  1.00  0.63          C   
+ATOM     13 O    GLU A   2      26.652  -2.693 -20.355  1.00  0.65          O   
+ATOM     14 CG   GLU A   2      28.679   0.555 -18.186  1.00  0.59          C   
+ATOM     15 CD   GLU A   2      29.028   1.885 -18.835  1.00  0.58          C   
+ATOM     16 OE1  GLU A   2      29.138   2.902 -18.113  1.00  0.54          O   
+ATOM     17 OE2  GLU A   2      29.192   1.910 -20.075  1.00  0.55          O   
+ATOM     18 N    ASN A   3      26.183  -3.102 -18.302  1.00  0.75          N   
+ATOM     19 CA   ASN A   3      24.877  -3.542 -18.780  1.00  0.74          C   
+ATOM     20 C    ASN A   3      24.165  -2.440 -19.561  1.00  0.75          C   
+ATOM     21 CB   ASN A   3      24.007  -4.010 -17.612  1.00  0.69          C   
+ATOM     22 O    ASN A   3      23.663  -1.482 -18.973  1.00  0.72          O   
+ATOM     23 CG   ASN A   3      24.126  -5.499 -17.356  1.00  0.64          C   
+ATOM     24 ND2  ASN A   3      23.585  -5.953 -16.231  1.00  0.61          N   
+ATOM     25 OD1  ASN A   3      24.700  -6.236 -18.161  1.00  0.58          O   
+ATOM     26 N    LYS A   4      24.464  -2.491 -20.797  1.00  0.69          N   
+ATOM     27 CA   LYS A   4      23.507  -1.694 -21.559  1.00  0.69          C   
+ATOM     28 C    LYS A   4      22.165  -1.609 -20.839  1.00  0.70          C   
+ATOM     29 CB   LYS A   4      23.315  -2.280 -22.959  1.00  0.65          C   
+ATOM     30 O    LYS A   4      21.586  -2.633 -20.470  1.00  0.68          O   
+ATOM     31 CG   LYS A   4      23.711  -1.336 -24.085  1.00  0.66          C   
+ATOM     32 CD   LYS A   4      23.441  -1.952 -25.452  1.
