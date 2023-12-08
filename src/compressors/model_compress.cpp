@@ -1,3 +1,10 @@
+// add --type pdb --infile AF-A0A385XJ53-F1-model_v4.pdb -t 1 --out aa.psa --lossy --max-error-bb 500 --max-error-sc 500 --minimal
+// add --type pdb --infile AF-A0A385XJ53-F1-model_v4.pdb -t 1 --out aa.psa --lossy --max-error-bb 50 --max-error-sc 50 --minimal
+// get --type pdb --file AF-A0A385XJ53-F1-model_v4 -t 16 --in aa.psa --outdir out/
+// get --type pdb --file AF-A0A385XJ53-F1-model_v4 -t 16 --in aa.psa --outdir out/
+// get --type pdb --file AF-A0A385XJ53-F1-model_v4 -t 16 --in ecoli.psa_500_500 --outdir out/
+
+
 #include "model_compress.h"
 
 #include "../common/init_model.hpp"
@@ -5,6 +12,7 @@
 
 #include <iostream>
 #include <set>
+#include <numeric>
 
 // *****************************************************************
 // Restarts the model when new chain starts
@@ -48,7 +56,7 @@ size_t ModelCompress::get_no_centroids(const aa_t aa, const atom_t atom)
 // *****************************************************************
 uint32_t ModelCompress::calc_ctx(const aa_t aa, const atom_t atom)
 {
-	return prediction_precision[packed_atom_ctx(aa, atom)];
+	return prediction_precision[packed_atom_ctx(aa, atom)] / 3;
 
 //	return packed_atom_ctx(aa, atom);
 }
@@ -137,7 +145,8 @@ bool ModelCompress::calc_curr_dist(const array<atom_t, 3>& ref_atoms, atom_t ato
 }
 
 // *****************************************************************
-void ModelCompress::calc_deltas(const int_coords_t& curr_atom_coords, const double_coords_t* rc, const vector<dist6_t>& curr_centroids, int centroid_id, int64_t precision, bool &first, int64_t& dx, int64_t &dy, int64_t& dz)
+void ModelCompress::calc_deltas(const int_coords_t& curr_atom_coords, const double_coords_t* rc, const vector<dist6_t>& curr_centroids, int centroid_id, int64_t precision, 
+	bool &first, bool& equal_q, int64_t& dx, int64_t &dy, int64_t& dz)
 {
 	tetrahedron_t th(rc[0], rc[1], rc[2], curr_centroids[centroid_id][3], curr_centroids[centroid_id][4], curr_centroids[centroid_id][5]);
 
@@ -148,6 +157,7 @@ void ModelCompress::calc_deltas(const int_coords_t& curr_atom_coords, const doub
 		{round_coord(q_both.second.x, precision), round_coord(q_both.second.y, precision), round_coord(q_both.second.z, precision)} };
 
 	if (coords_distance2(qc[0], curr_atom_coords) < coords_distance2(qc[1], curr_atom_coords))
+//	if (est_delta_coding_cost(qc[0], curr_atom_coords) <= est_delta_coding_cost(qc[1], curr_atom_coords))
 	{
 		first = true;
 		dx = qc[0].x - curr_atom_coords.x;
@@ -162,6 +172,8 @@ void ModelCompress::calc_deltas(const int_coords_t& curr_atom_coords, const doub
 		dz = qc[1].z - curr_atom_coords.z;
 	}
 
+	equal_q = qc[0].x == qc[1].x && qc[0].y == qc[1].y && qc[0].z == qc[1].z;
+
 	dx /= precision;
 	dy /= precision;
 	dz /= precision;
@@ -171,7 +183,7 @@ void ModelCompress::calc_deltas(const int_coords_t& curr_atom_coords, const doub
 // Find centroid that minimizes the cost of coding
 // In max_compresion mode requires prediction for many candidates
 // In default mode just picks the most similar tetrahedron
-bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, bool& first, int64_t& dx, int64_t& dy, int64_t& dz)
+bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, bool& first, bool &equal_q, int64_t& dx, int64_t& dy, int64_t& dz)
 {
 	if (aa_curr.type == aa_t::unknown || aa_curr.atoms[atom_pos].type == atom_t::unknown)
 		return false;
@@ -179,6 +191,7 @@ bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, b
 	uint32_t ctx = packed_atom_ctx(aa_curr.type, aa_curr.atoms[atom_pos].type);
 
 	const auto& curr_centroids = centroids[ctx];
+	const auto& curr_centroid_counts = centroid_counts[ctx];
 	const auto& curr_references = reference_atoms[ctx];
 	array<int_coords_t, 3> ref_coords;
 
@@ -209,18 +222,22 @@ bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, b
 		int64_t best_dy = 0;
 		int64_t best_dz = 0;
 		bool best_first = true;
+		bool best_equal_q = true;
+
+		auto sum_counts = accumulate(curr_centroid_counts.begin(), curr_centroid_counts.end(), 0u);
 
 		for (int i = 0; i < no_centroids; ++i)
 		{
-			calc_deltas(curr_atom_coords, rc, curr_centroids, i, precision, first, dx, dy, dz);
+			calc_deltas(curr_atom_coords, rc, curr_centroids, i, precision, first, equal_q, dx, dy, dz);
 
-			double cost = log2(1 + abs(dx)) + log2(1 + abs(dy)) + log2(1 + abs(dz)) + log2(1 + i);
+			double cost = log2(1 + abs(dx)) + log2(1 + abs(dy)) + log2(1 + abs(dz)) - log2(curr_centroid_counts[i] / (double) sum_counts);
 
 			if (cost < best_cost)
 			{
 				best_cost = cost;
 				best_centroid_id = i;
 				best_first = first;
+				best_equal_q = equal_q;
 				best_dx = dx;
 				best_dy = dy;
 				best_dz = dz;
@@ -229,6 +246,7 @@ bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, b
 
 		centroid_id = best_centroid_id;
 		first = best_first;
+		equal_q = best_equal_q;
 		dx = best_dx;
 		dy = best_dy;
 		dz = best_dz;
@@ -236,7 +254,7 @@ bool ModelCompress::predict(int atom_pos, int& centroid_id, int& no_centroids, b
 	else
 	{
 		centroid_id = select_best_centroid(curr_centroids, curr_dist);				// Find most similar tetrahedron
-		calc_deltas(curr_atom_coords, rc, curr_centroids, centroid_id, precision, first, dx, dy, dz);
+		calc_deltas(curr_atom_coords, rc, curr_centroids, centroid_id, precision, first, equal_q, dx, dy, dz);
 	}
 
 	return true;
@@ -257,7 +275,7 @@ void ModelCompress::set_coords(const atom_t atom, const int_coords_t& coords)
 }
 
 // *****************************************************************
-bool ModelCompress::decode(atom_t atom, int centroid_id, bool first, int64_t dx, int64_t dy, int64_t dz, int_coords_t &dc)
+bool ModelCompress::decode_part1(atom_t atom, int centroid_id, pair<int_coords_t, int_coords_t> &q_both)
 {
 	uint32_t ctx = packed_atom_ctx(aa_curr.type, atom);
 
@@ -272,12 +290,6 @@ bool ModelCompress::decode(atom_t atom, int centroid_id, bool first, int64_t dx,
 	if (!dist_found)
 		return false;
 
-	auto precision = is_backbone_atom(atom) ? res_backbone : res_sidechain;
-
-	dx *= precision;
-	dy *= precision;
-	dz *= precision;
-
 	double_coords_t rc[3] = {
 		{ (double) ref_coords[0].x, (double)ref_coords[0].y, (double)ref_coords[0].z },
 		{ (double)ref_coords[1].x, (double)ref_coords[1].y, (double)ref_coords[1].z },
@@ -285,26 +297,47 @@ bool ModelCompress::decode(atom_t atom, int centroid_id, bool first, int64_t dx,
 
 	tetrahedron_t th(rc[0], rc[1], rc[2], curr_centroids[centroid_id][3], curr_centroids[centroid_id][4], curr_centroids[centroid_id][5]);
 
-	auto dqc = first ? th.get_q() : th.get_q_alt();
+	auto q = th.get_q_both();
 
-	dc.x = round_coord(dqc.x, precision) - dx;
-	dc.y = round_coord(dqc.y, precision) - dy;
-	dc.z = round_coord(dqc.z, precision) - dz;
+	auto precision = is_backbone_atom(atom) ? res_backbone : res_sidechain;
 
-	aa_curr.atoms.emplace_back(0, atom, dc, 0, ' ');
-	atoms_curr[atom].coords = dc;
+	q_both.first.x = round_coord(q.first.x, precision);
+	q_both.first.y = round_coord(q.first.y, precision);
+	q_both.first.z = round_coord(q.first.z, precision);
+
+	q_both.second.x = round_coord(q.second.x, precision);
+	q_both.second.y = round_coord(q.second.y, precision);
+	q_both.second.z = round_coord(q.second.z, precision);
 
 	return true;
 }
 
 // *****************************************************************
-bool ModelCompress::check_in_dict(const int_coords_t& ic)
+void ModelCompress::decode_part2(atom_t atom, const int_coords_t& q, int64_t dx, int64_t dy, int64_t dz, int_coords_t& dc)
 {
-	return q_dict.count(ic) != 0;
+	auto precision = is_backbone_atom(atom) ? res_backbone : res_sidechain;
+
+	dc.x = q.x - dx * precision;
+	dc.y = q.y - dy * precision;
+	dc.z = q.z - dz * precision;
+
+	aa_curr.atoms.emplace_back(0, atom, dc, 0, ' ');
+	atoms_curr[atom].coords = dc;
 }
 
 // *****************************************************************
-void ModelCompress::add_to_dict(const int_coords_t& ic)
+int ModelCompress::check_in_dict(const int_coords_t& ic)
+{
+	auto p = q_dict.find(ic);
+
+	if (p == q_dict.end())
+		return -1;
+	else
+		return p->second;
+}
+
+// *****************************************************************
+void ModelCompress::add_to_dict(const int_coords_t& ic, int id)
 {
 	int max_dif = 2;
 	int max_dist = 4;
@@ -313,7 +346,7 @@ void ModelCompress::add_to_dict(const int_coords_t& ic)
 		for(int dy = -max_dif; dy <= max_dif; ++dy)
 			for (int dz = -max_dif; dz <= max_dif; ++dz)
 				if (abs(dx) + abs(dy) + abs(dz) <= max_dist)
-					q_dict.insert(int_coords_t{ ic.x + dx, ic.y + dy, ic.z + dx });
+					q_dict.emplace(int_coords_t{ ic.x + dx, ic.y + dy, ic.z + dx }, id);
 }
 
 // *****************************************************************
@@ -323,26 +356,35 @@ bool ModelCompress::need_run_clean()
 }
 
 // *****************************************************************
-void ModelCompress::clean_model()
+bool ModelCompress::clean_model()
 {
 	if (!need_run_clean())
-		return;
+		return false;
+
+	bool was_cleaned = false;
 
 	res_backbone_cleaned = res_backbone;
 	res_sidechain_cleaned = res_sidechain;
 
 	centroids.clear();
 	init_centroids();
+	init_centroid_counts();
 
 	vector<dist6_t> filtered_centroids;
+	vector<uint32_t> filtered_centroid_counts;
 
 	for (uint32_t i = 0; i < (uint32_t) centroids.size(); ++i)
 	{
 		int64_t res = is_backbone_atom(unpack_atom_ctx(i).second) ? res_backbone : res_sidechain;
 
 		filtered_centroids.clear();
+		filtered_centroid_counts.clear();
 
 		auto& centr = centroids[i];
+		auto& centr_counts = centroid_counts[i];
+
+		if (centr.size() <= 1)
+			continue;
 
 		q_dict.clear();
 
@@ -355,17 +397,45 @@ void ModelCompress::clean_model()
 			int_coords_t q1{ reduce_coord(pred.first.x, res), reduce_coord(pred.first.y, res), reduce_coord(pred.first.z, res) };
 			int_coords_t q2{ reduce_coord(pred.second.x, res), reduce_coord(pred.second.y, res), reduce_coord(pred.second.z, res) };
 
-			if (check_in_dict(q1) || check_in_dict(q2))
+			auto q1_id = check_in_dict(q1);
+			auto q2_id = check_in_dict(q2);
+//			auto q_id = max(q1_id, q2_id);	
+			auto q_id = -1;	
+
+			if (q1_id == q2_id)
+				q_id = q1_id;
+
+			if (q_id >= 0)
+			{
+				// Merging centroids
+				auto sum_counts = filtered_centroid_counts[q_id] + centr_counts[j];
+
+				int64_t w1 = filtered_centroid_counts[q_id];
+				int64_t w2 = centr_counts[j];
+
+				for (int k = 0; k < 6; ++k)
+					filtered_centroids[q_id][k] = (int)((filtered_centroids[q_id][k] * w1 + centr[j][k] * w2 + sum_counts / 2) / sum_counts);
+
+				filtered_centroid_counts[q_id] = sum_counts;
+				was_cleaned = true;
+
 				continue;
+			}
 			
-			add_to_dict(q1);
-			add_to_dict(q2);
+			if (q1_id < 0)
+				add_to_dict(q1, (int) filtered_centroids.size());
+			if (q2_id < 0)
+				add_to_dict(q2, (int) filtered_centroids.size());
 
 			filtered_centroids.emplace_back(centr[j]);
+			filtered_centroid_counts.emplace_back(centr_counts[j]);
 		}
 
 		swap(centroids[i], filtered_centroids);
+		swap(centroid_counts[i], filtered_centroid_counts);
 	}
+
+	return was_cleaned;
 }
 
 // EOF

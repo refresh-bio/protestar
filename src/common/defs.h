@@ -37,6 +37,6 @@ using packed_data_t = vector<uint8_t>;
 #endif
 
 // Just to check what is the compression of cart values
-//#define NO_CART_STORAGE
+// #define NO_CART_STORAGE
 
 // EOF

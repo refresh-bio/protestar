@@ -1,5 +1,5 @@
-# Protein Structures Archivizer
-Protein Structures Archivizer (ProteStAr) is a tool designed to compress collections of files describing protein structures.
+# Protein Structures Archiver
+Protein Structures Archiver (ProteStAr) is a tool designed to compress collections of files describing protein structures.
 In the current version it supports PDB, mmCIF, PAE (prediction aligned errors in JSON format), confidence (in JSON format).
 
 The tool offers high compression ratios (more than 4 times better than gzip) and fast random access queries.
@@ -44,15 +44,18 @@ cd protestar && make -j
 ```
 
 ## Instalation and configuration
-ProteStAr should be downloaded from [https://github.com/refresh-bio/protestart](https://github.com/refresh-bio/protestart) and compiled. The supported OS are:
+ProteStAr should be downloaded from [https://github.com/refresh-bio/protestar](https://github.com/refresh-bio/protestart) and compiled. The supported OS are:
 * Windows: Visual Studio 2022 solution provided,
 * Linux: make project (G++ 9.0 or newer required).
 
 Support for MacOS and well as ARM-based CPUs will be added soon.
 
 ## Version history
+* 1.0.0 (8 December 2023)
+  * *pyprotestar* Python package added,
+  * fixed incorrect alignment of ATOM column in some PDB files. 
 * 0.7 (20 July 2023)
-  * First public release
+  * first public release.
 
 ## Usage
 `protestar <command> <options>`
@@ -120,6 +123,26 @@ Python library will be available soon.
 THe C++ API is provided in `src/lib-cxx/protestar-api.h` file. 
 You can also take a look at `src/example_api` to see the API in use.
 
+### Python package
+ProteStAr archives can be accessed through *pyprotestar* Python package. The package is built automatically together with ProteStAr binaries but can be also compiled separately:
+```
+make -j pyprotestar
+```
+As a result, a library named like `pyprotestar.cpython-38-x86_64-linux-gnu.so` will be created in the `pyprotestar` directory. To make the package visible in Python, go to this directory and extend the `PYTHONPATH` environment variable with the following commands:
+```
+cd pyprotestar
+source set_path.sh
+```
+After that, *pyprotestar* package can be imported in a Python script:
+```
+import pyprotestar
+```
+In the current directory one can find an example script named [pyprotestar_test.py](./pyprotestar/pyprotestar_test.py) which compresses a set of CIF, PDB, PAE, and CONF files using a regular ProteStAr binary (it assumes it was previously built with `make -j` command and is available in `../bin/` subdirectory) and then accesses the resulting archive using *pyprotestar*. A single file of each type is extracted from the archive and given as an input to the appropriate parser. In particular, [Bio.PDB package](https://biopython.org/docs/1.75/api/Bio.PDB.html) from Biopython is used for CIF/PDB, while PAE and CONF files are parsed using regular JSON library. Therefore, Biopython has to be installed prior running the script:
+```
+pip install biopython
+python3 pyprotestar_test.py
+```
+
 ## Test data
 The data in apsd-data were selected from [AlphaFold Protein Structure Database](https://alphafold.ebi.ac.uk/) to allow quick experiments of the tool.
 
@@ -133,5 +156,6 @@ The data in apsd-data were selected from [AlphaFold Protein Structure Database](
 
 ## Citing
 
+Deorowicz, S., Gudyś, A. (2023) Efficient protein structure archiving using ProteStAr, biorXiv preprint, [https://doi.org/10.1101/2023.07.20.549913](https://doi.org/10.1101/2023.07.20.549913).
 
 

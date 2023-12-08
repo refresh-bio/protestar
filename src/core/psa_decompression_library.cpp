@@ -1,9 +1,9 @@
 #include "psa_decompressor_library.h"
-#include "../parsers/cif.h"
-#include "../parsers/pdb.h"
+#include "../parsers/cif-output.h"
+#include "../parsers/pdb-output.h"
 #include "../parsers/json.h"
-#include "../compressors/cif-compressor.h"
-#include "../compressors/pdb-compressor.h"
+#include "../compressors/cif-decompressor.h"
+#include "../compressors/pdb-decompressor.h"
 #include "../compressors/pae-compressor.h"
 #include "../compressors/conf-compressor.h"
 
@@ -155,9 +155,9 @@ bool CPSADecompressorLibrary::GetFilesInfo(file_type_t file_type, vector<unique_
 // *****************************************************************
 bool CPSADecompressorLibrary::GetCIFData(const string& file_name, vector<char>& file_data)
 {
-	CifCompressor cif_compressor(false);
+	CifDecompressor cif_decompressor;
 	CIF_file_desc_t cif_desc;
-	Cif cif_out(false);
+	CifOutput cif_out(false);
 
 	vector<uint8_t> data_packed;
 	uint64_t metadata;
@@ -173,7 +173,7 @@ bool CPSADecompressorLibrary::GetCIFData(const string& file_name, vector<char>& 
 		if (!in_archive->get_part(stream_id, cif_desc.id, data_packed, metadata))
 			return false;
 
-		cif_compressor.decompress(&cif_out, data_packed, cif_desc.raw_size, file_name);
+		cif_decompressor.decompress(&cif_out, data_packed, cif_desc.raw_size, file_name);
 		cif_out.store();
 		cif_out.contents(file_data);
 	}
@@ -186,9 +186,9 @@ bool CPSADecompressorLibrary::GetCIFData(const string& file_name, vector<char>& 
 // *****************************************************************
 bool CPSADecompressorLibrary::GetPDBData(const string& file_name, vector<char>& file_data)
 {
-	PDBCompressor pdb_compressor(false);
+	PDBDecompressor pdb_compressor;
 	PDB_file_desc_t pdb_desc;
-	Pdb pdb_out(false);
+	PdbOutput pdb_out(false);
 
 	vector<uint8_t> data_packed;
 	uint64_t metadata;

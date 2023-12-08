@@ -2,15 +2,17 @@
 #include <chrono>
 #include <fstream>
 
-#include "../parsers/cif.h"
-#include "../parsers/pdb.h"
+#include "../parsers/cif-input.h"
+#include "../parsers/cif-output.h"
+#include "../parsers/pdb-input.h"
+#include "../parsers/pdb-output.h"
 
 using namespace std;
 
 void test_cif(const std::vector<string>& files) {
 
-    Cif cif(false);
-    Cif outCif(false);
+    CifInput cif(false);
+    CifOutput outCif(false);
     size_t total_read = 0;
   
     double t_load = 0, t_parse = 0, t_store = 0, t_save = 0;
@@ -93,8 +95,8 @@ void test_cif(const std::vector<string>& files) {
 
 void test_pdb(const std::vector<string>& files) {
 
-    Pdb pdb(false);
-    Pdb outPdb(false);
+    PdbInput pdb(false);
+    PdbOutput outPdb(false);
     size_t total_read = 0;
 
     double t_load = 0, t_parse = 0, t_store = 0, t_save = 0;

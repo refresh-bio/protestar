@@ -7,8 +7,9 @@
 #include <cmath>
 #include <utility>
 
-#include "../parsers/cif.h"
-#include "../parsers/pdb.h"
+//#include "../parsers/cif.h"
+//#include "../parsers/pdb.h"
+#include "../parsers/entries.h"
 
 #include "../common/defs.h"
 #include "../common/aa_atoms.h"
@@ -266,6 +267,8 @@ const int cart_working_precision = 6;		// Must be consistent with CifCompressor!
 // *****************************************************************
 int coords_distance(const int_coords_t& a, const int_coords_t& b);
 int64_t coords_distance2(const int_coords_t& a, const int_coords_t& b);
+//int64_t coords_distance2_precision(const int_coords_t& a, const int_coords_t& b, int64_t precision);
+double est_delta_coding_cost(const int_coords_t& a, const int_coords_t& b);
 
 // *****************************************************************
 class Protein

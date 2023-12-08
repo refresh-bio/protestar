@@ -1,4 +1,4 @@
-all: protestar protestar-model-learn example-api
+all: protestar protestar-model-learn example-api pyprotestar
 
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
@@ -21,8 +21,8 @@ PROTESTAR_LIBS_DIR = libs
 MIMALLOC_INLUCDE_DIR = src/3rd-party/mimalloc/include
 LIBS_DIR = . #/usr/local/lib
 INCLUDE_DIR= . #/usr/local/include
-PY_PROTESTAR_API_DIR = py_protestar_api
-PYBIND11_LIB = $(PY_PROTESTAR_API_DIR)/pybind11-2.8.1
+PYPROTESTAR_DIR = pyprotestar
+PYBIND11_LIB = $(PYPROTESTAR_DIR)/pybind11-2.8.1
 
 INC_ZLIB=src/3rd-party/dependencies-zlib
 INC_ZSTD=src/3rd-party/dependencies-zstd/lib
@@ -94,10 +94,11 @@ else
 	PY_FLAGS = -fPIC
 endif
 
-
-CFLAGS	= -Wall -O3 -fsigned-char $(CPU_FLAGS) $(STATIC_CFLAGS) -std=c++17
+AR 	= ar
+CFLAGS	= -fPIC -Wall -O3 -fsigned-char $(CPU_FLAGS) $(STATIC_CFLAGS) -std=c++17 
 CLINK	= -lm $(STATIC_LFLAGS) -O3 -std=c++17
-PY_KMC_API_CFLAGS = $(PY_FLAGS) -Wall -shared -std=c++17 -O3
+PYPROTESTAR_CFLAGS = $(PY_FLAGS) -Wall -shared -std=c++17 -O3
+
 
 MIMALLOC_OBJ=src/3rd-party/mimalloc/mimalloc.o
 
@@ -125,20 +126,39 @@ $(PROTESTAR_MODEL_LEARN_DIR)/main.o \
 $(PROTESTAR_MODEL_LEARN_DIR)/model_learn.o
 
 PARSER_OBJS = \
-$(PROTESTAR_PARSER_DIR)/cif.o \
+$(PROTESTAR_PARSER_DIR)/cif-input.o \
+$(PROTESTAR_PARSER_DIR)/cif-output.o \
 $(PROTESTAR_PARSER_DIR)/conversion.o \
-$(PROTESTAR_PARSER_DIR)/input.o \
-$(PROTESTAR_PARSER_DIR)/pdb.o \
-$(PROTESTAR_PARSER_DIR)/json.o
+$(PROTESTAR_PARSER_DIR)/input-load.o \
+$(PROTESTAR_PARSER_DIR)/json.o \
+$(PROTESTAR_PARSER_DIR)/json-io.o \
+$(PROTESTAR_PARSER_DIR)/json-base.o \
+$(PROTESTAR_PARSER_DIR)/pdb-input.o \
+$(PROTESTAR_PARSER_DIR)/pdb-output.o
+
+LIB_PARSER_OBJS = \
+$(PROTESTAR_PARSER_DIR)/cif-output.o \
+$(PROTESTAR_PARSER_DIR)/conversion.o \
+$(PROTESTAR_PARSER_DIR)/json.o \
+$(PROTESTAR_PARSER_DIR)/json-base.o \
+$(PROTESTAR_PARSER_DIR)/pdb-output.o
 
 COMPRESSOR_OBJS = \
-$(PROTESTAR_COMPRESSORS_DIR)/cif-compressor.o \
 $(PROTESTAR_COMPRESSORS_DIR)/conf-compressor.o \
 $(PROTESTAR_COMPRESSORS_DIR)/model_compress.o \
 $(PROTESTAR_COMPRESSORS_DIR)/pae-compressor.o \
-$(PROTESTAR_COMPRESSORS_DIR)/pdb-compressor.o \
+$(PROTESTAR_COMPRESSORS_DIR)/serializer.o \
+$(PROTESTAR_COMPRESSORS_DIR)/struct-base.o \
 $(PROTESTAR_COMPRESSORS_DIR)/struct-compressor.o \
-$(PROTESTAR_COMPRESSORS_DIR)/serializer.o
+$(PROTESTAR_COMPRESSORS_DIR)/struct-decompressor.o
+
+LIB_COMPRESSOR_OBJS = \
+$(PROTESTAR_COMPRESSORS_DIR)/conf-compressor.o \
+$(PROTESTAR_COMPRESSORS_DIR)/model_compress.o \
+$(PROTESTAR_COMPRESSORS_DIR)/pae-compressor.o \
+$(PROTESTAR_COMPRESSORS_DIR)/serializer.o \
+$(PROTESTAR_COMPRESSORS_DIR)/struct-base.o \
+$(PROTESTAR_COMPRESSORS_DIR)/struct-decompressor.o
 
 CORE_OBJS = \
 $(PROTESTAR_CORE_DIR)/collection.o \
@@ -147,8 +167,12 @@ $(PROTESTAR_CORE_DIR)/psa_compressor.o \
 $(PROTESTAR_CORE_DIR)/psa_decompression_library.o \
 $(PROTESTAR_CORE_DIR)/psa_decompressor.o
 
+LIB_CORE_OBJS = \
+$(PROTESTAR_CORE_DIR)/collection.o \
+$(PROTESTAR_CORE_DIR)/psa_base.o \
+$(PROTESTAR_CORE_DIR)/psa_decompression_library.o
+
 UTILS_OBJS = \
-$(PROTESTAR_CORE_DIR)/io.o \
 $(PROTESTAR_CORE_DIR)/utils.o
 
 COMMON_OBJS = \
@@ -177,13 +201,25 @@ protestar-model-learn: $(MIMALLOC_OBJ) $(MODEL_APP_OBJS) $(COMMON_OBJS) $(PARSER
 	-mkdir -p $(OUT_BIN_DIR)
 	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB)
 
-$(LIB_PSA): $(LIB_OBJS) $(PARSER_OBJS) $(COMPRESSOR_OBJS) $(CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS)
+$(LIB_PSA): $(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS)
 	-mkdir -p $(OUT_BIN_DIR)
-	$(AR) $(AR_OPT) $(LIB_PSA) $(LIB_OBJS) $(PARSER_OBJS) $(COMPRESSOR_OBJS) $(CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS)
+	$(AR) $(AR_OPT) $(LIB_PSA) $(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS)
 	
-example-api: $(EXAMPLE_OBJS) $(LIB_ZLIB) $(LIB_ZSTD) $(LIB_PSA)
+example-api: $(EXAMPLE_OBJS) $(LIB_ZSTD) $(LIB_PSA)
 	-mkdir -p $(OUT_BIN_DIR)
-	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB) $(LIB_ZSTD) $(LIB_PSA)
+	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZSTD) $(LIB_PSA)
+
+.PHONY:pyprotestar
+pyprotestar: $(PYPROTESTAR_DIR)/pyprotestar.cpp $(PROTESTAR_CXX_DIR)/lib-cxx.o \
+	$(MIMALLOC_OBJ) $(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS) $(LIB_ZSTD)
+	$(CXX) $(PYPROTESTAR_CFLAGS)  \
+	$(PYPROTESTAR_DIR)/pyprotestar.cpp \
+	$(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS) $(LIB_ZSTD) \
+	-I $(PROTESTAR_MAIN_DIR) \
+	-I $(PROTESTAR_APP_DIR) \
+	-I $(PYBIND11_LIB)/include \
+	-I `python3 -c "import sysconfig;print(sysconfig.get_paths()['include'])"` \
+	-o 'pyprotestar/'$@`python3-config --extension-suffix`
 
 clean:
 	-rm $(PROTESTAR_APP_DIR)/*.o
@@ -200,7 +236,7 @@ clean:
 	-rm $(OUT_BIN_DIR)/example-api
 	-rm $(OUT_BIN_DIR)/protestar-model-learn
 	-rm $(OUT_BIN_DIR)/libpsa.a
-	-rm -f $(PY_PROTESTAR_API_DIR)/*.o
-	-rm *.so
+	-rm -f $(PYPROTESTAR_DIR)/*.o
+	-rm -f $(PYPROTESTAR_DIR)/*.so
 	cd src/3rd-party/dependencies-zlib; make clean;
 	cd src/3rd-party/dependencies-zstd/lib; make clean;

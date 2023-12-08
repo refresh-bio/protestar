@@ -84,6 +84,9 @@
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>..\3rd-party\mimalloc\include;..\3rd-party\dependencies-zlib;..\3rd-party\sajson;..\libs\refresh\compression;..\libs\refresh\archive;..\libs\refresh\range_coder;../libs/vclclass;$(IncludePath)../3rd-party/vclclass;$(IncludePath)</IncludePath>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -150,11 +153,10 @@
     <ClCompile Include="..\common\aa_atoms.cpp" />
     <ClCompile Include="..\common\atom_extractor.cpp" />
     <ClCompile Include="..\common\model.cpp" />
-    <ClCompile Include="..\core\io.cpp" />
     <ClCompile Include="..\core\utils.cpp" />
-    <ClCompile Include="..\parsers\cif.cpp" />
+    <ClCompile Include="..\parsers\cif-input.cpp" />
     <ClCompile Include="..\parsers\conversion.cpp" />
-    <ClCompile Include="..\parsers\input.cpp" />
+    <ClCompile Include="..\parsers\input-load.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="model_learn.cpp" />
   </ItemGroup>
@@ -166,11 +168,11 @@
     <ClInclude Include="..\common\tetrahedron.h" />
     <ClInclude Include="..\core\io.h" />
     <ClInclude Include="..\core\utils.h" />
-    <ClInclude Include="..\parsers\cif.h" />
+    <ClInclude Include="..\parsers\cif-input.h" />
     <ClInclude Include="..\parsers\columns.h" />
     <ClInclude Include="..\parsers\conversion.h" />
     <ClInclude Include="..\parsers\entries.h" />
-    <ClInclude Include="..\parsers\input.h" />
+    <ClInclude Include="..\parsers\input-load.h" />
     <ClInclude Include="kmeans.h" />
     <ClInclude Include="model_learn.h" />
   </ItemGroup>

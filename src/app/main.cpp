@@ -250,12 +250,12 @@ bool parse_params_add(int argc, char** argv)
             params.max_error_bb = stoi(argv[i + 1]);
             if (params.max_error_bb < 0)
             {
-                cerr << "To low max-error-bb value: " << params.max_error_bb << " changed to 0\n";
+                cerr << "Too low max-error-bb value: " << params.max_error_bb << " changed to 0\n";
                 params.max_error_bb = 0;
             }
             else if (params.max_error_bb > 500)
             {
-                cerr << "To high max-error-bb value: " << params.max_error_bb << " changed to 500\n";
+                cerr << "Too high max-error-bb value: " << params.max_error_bb << " changed to 500\n";
                 params.max_error_bb = 500;
             }
             ++i;
@@ -265,12 +265,12 @@ bool parse_params_add(int argc, char** argv)
             params.max_error_sc = stoi(argv[i + 1]);
             if (params.max_error_sc < 0)
             {
-                cerr << "To low max-error-sc value: " << params.max_error_sc << " changed to 0\n";
+                cerr << "Too low max-error-sc value: " << params.max_error_sc << " changed to 0\n";
                 params.max_error_sc = 0;
             }
             else if (params.max_error_sc > 500)
             {
-                cerr << "To high max-error-sc value: " << params.max_error_sc << " changed to 500\n";
+                cerr << "Too high max-error-sc value: " << params.max_error_sc << " changed to 500\n";
                 params.max_error_sc = 500;
             }
             ++i;
@@ -280,12 +280,12 @@ bool parse_params_add(int argc, char** argv)
             params.pae_lossy_level = stoi(argv[i + 1]);
             if (params.pae_lossy_level < 0)
             {
-                cerr << "To low pae-lossy-level value: " << params.pae_lossy_level << " changed to 0\n";
+                cerr << "Too low pae-lossy-level value: " << params.pae_lossy_level << " changed to 0\n";
                 params.pae_lossy_level = 0;
             }
-            else if (params.max_error_sc > 4)
+            else if (params.pae_lossy_level > 4)
             {
-                cerr << "To high pae-lossy-level value: " << params.pae_lossy_level << " changed to 4\n";
+                cerr << "Too high pae-lossy-level value: " << params.pae_lossy_level << " changed to 4\n";
                 params.pae_lossy_level = 4;
             }
             ++i;
@@ -776,8 +776,6 @@ bool do_info()
 // *****************************************************************
 int main(int argc, char **argv) 
 {
-//    tetrahedron_t tetr(0, 0, 0, 0, 0, 0);
-
     if (!parse_params(argc, argv))
         return 0;
 

@@ -1,4 +1,4 @@
-#include "pdb.h"
+#include "pdb-input.h"
 #include "entries.h"
 
 #include <algorithm>
@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void Pdb::parse() {
+void PdbInput::parse() {
 	char* fileEnd = fileBuffer.data() + fileBufferBytes;
 	char* p = fileBuffer.data();
 
@@ -14,9 +14,9 @@ void Pdb::parse() {
 	rows.reserve(count(p, fileEnd, '\n'));
 
 	while (p < fileEnd) {
-		
+
 		string sectionName(p, std::find(p, p + 6, ' '));
-		
+
 		bool need_ommit = minimal_mode && !MINIMAL_SECTIONS.count(sectionName);
 		auto type = LoopEntry::str2type(sectionName);
 
@@ -24,12 +24,12 @@ void Pdb::parse() {
 
 			LoopEntry* entry = new LoopEntry(sectionName, type);
 
-//			char* section = p;
-			
-			// get row pointers
+			//			char* section = p;
+
+						// get row pointers
 			rows.clear();
 			rows.push_back(p);
-			
+
 			bool ignore = false;
 			bool agree = false;
 
@@ -37,7 +37,7 @@ void Pdb::parse() {
 
 			do {
 				char* q = find(p, fileEnd, '\n');
-				
+
 				// incorrect line length
 				if (q - p != lineLength) {
 					throw std::runtime_error("Invalid PDB file");
@@ -46,13 +46,13 @@ void Pdb::parse() {
 
 				++p; // go to next line
 				string localName(p, find(p, p + 6, ' '));
-				
+
 				ignore = IGNORED_SECTIONS.count(localName);
 				agree = localName == sectionName;
 				if (!ignore && agree) {
 					rows.push_back(p);
 				}
-			
+
 			} while (ignore || agree);
 
 
@@ -71,7 +71,7 @@ void Pdb::parse() {
 						char*& dst = dataBufferPos;
 						col = new StringColumn(def.name, rows, def.width, def.start, dst);
 						// rescue mode - change loop type to standard
-						entry->setType(LoopEntry::Type::Standard); 
+						entry->setType(LoopEntry::Type::Standard);
 					}
 				}
 				entry->addColumn(col);
@@ -82,10 +82,10 @@ void Pdb::parse() {
 		else {
 			// process block section
 			char* section = p;
-			
+
 			do {
 				p = find(p, fileEnd, '\n');
-				
+
 				// go to next line
 				if (p != fileEnd) {
 					++p;
@@ -109,40 +109,3 @@ void Pdb::parse() {
 	}
 }
 
-
-size_t Pdb::store() {
-
-	char* p = fileBuffer.data();
-//	char* p0 = p;
-
-	for (const Entry* e : entries) {
-		if (!e->isLoop) {
-			const BlockEntry* be = dynamic_cast<const BlockEntry*>(e);
-//			realloc_filebuf_if_necessary(p, be->size);
-			copy_n(be->data, be->size, p);
-			p += be->size;
-		}
-		else {
-			const LoopEntry* le = dynamic_cast<const LoopEntry*>(e);
-			
-			// save rows
-			for (int ir = 0; ir < le->getRowCount(); ++ir) {
-				char* beg = p;
-				for (int ic = 0; ic < (int) le->getColumns().size(); ++ic) {
-//					realloc_filebuf_if_necessary(p);
-					while (p < beg + COLUMN_DEFS[ic].start) {
-						*p = ' ';
-						++p;
-					}
-					
-//					realloc_filebuf_if_necessary(p);
-					le->getColumns()[ic]->output(ir, p);
-				}
-				*p++ = '\n';
-			}
-		}
-	}
-
-	fileBufferBytes = p - fileBuffer.data();
-	return fileBufferBytes;
-}

@@ -78,11 +78,14 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\3rd-party\dependencies-zlib;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\3rd-party\dependencies-zlib;..\3rd-party\dependencies-zstd\lib;..\3rd-party\vclclass;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\3rd-party\dependencies-zlib;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>..\3rd-party\dependencies-zlib;..\3rd-party\dependencies-zstd\lib;..\3rd-party\vclclass;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -147,21 +150,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\core\io.cpp" />
-    <ClCompile Include="..\parsers\cif.cpp" />
+    <ClCompile Include="..\core\utils.cpp" />
+    <ClCompile Include="..\parsers\cif-input.cpp" />
+    <ClCompile Include="..\parsers\cif-output.cpp" />
     <ClCompile Include="..\parsers\conversion.cpp" />
-    <ClCompile Include="..\parsers\input.cpp" />
-    <ClCompile Include="..\parsers\pdb.cpp" />
+    <ClCompile Include="..\parsers\input-load.cpp" />
+    <ClCompile Include="..\parsers\pdb-input.cpp" />
+    <ClCompile Include="..\parsers\pdb-output.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\io.h" />
-    <ClInclude Include="..\parsers\cif.h" />
+    <ClInclude Include="..\parsers\cif-base.h" />
+    <ClInclude Include="..\parsers\cif-input.h" />
+    <ClInclude Include="..\parsers\cif-output.h" />
     <ClInclude Include="..\parsers\columns.h" />
     <ClInclude Include="..\parsers\conversion.h" />
     <ClInclude Include="..\parsers\entries.h" />
-    <ClInclude Include="..\parsers\input.h" />
-    <ClInclude Include="..\parsers\pdb.h" />
+    <ClInclude Include="..\parsers\input-base.h" />
+    <ClInclude Include="..\parsers\input-load.h" />
+    <ClInclude Include="..\parsers\input-save.h" />
+    <ClInclude Include="..\parsers\pdb-base.h" />
+    <ClInclude Include="..\parsers\pdb-input.h" />
+    <ClInclude Include="..\parsers\pdb-output.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\3rd-party\dependencies-zlib\build\zlib.vcxproj">

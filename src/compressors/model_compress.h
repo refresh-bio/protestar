@@ -5,6 +5,8 @@
 // *****************************************************************
 class ModelCompress : public Model
 {
+//	const int centroids_precision = 3;
+//	const int working_precision = 6;
 	int64_t res_backbone = 1;
 	int64_t res_sidechain = 1;
 	bool max_compression = false;
@@ -12,6 +14,7 @@ class ModelCompress : public Model
 	vector<array<atom_t, 3>> reference_atoms;
 	vector<vector<dist6_t>> centroids;
 	vector<int> prediction_precision;
+	vector<vector<uint32_t>> centroid_counts;
 
 	aa_desc_t aa_prev;
 	aa_desc_t aa_curr;
@@ -21,7 +24,7 @@ class ModelCompress : public Model
 
 	int64_t res_backbone_cleaned = 0;
 	int64_t res_sidechain_cleaned = 0;
-	set<int_coords_t> q_dict;
+	map<int_coords_t, int> q_dict;
 
 	int select_best_centroid(const vector<dist6_t> &curr_centroid, const dist6_t &dist);
 
@@ -47,10 +50,11 @@ class ModelCompress : public Model
 	bool calc_curr_dist(const array<atom_t, 3> &ref_atoms, int atom_pos, array<int_coords_t, 3>& ref_coords, dist6_t &curr_d);
 	bool calc_curr_dist(const array<atom_t, 3> &ref_atoms, atom_t atom, array<int_coords_t, 3>& ref_coords, dist3_t &curr_d);
 
-	void calc_deltas(const int_coords_t &curr_atom_coords, const double_coords_t* rc, const vector<dist6_t>& curr_centroids, int centroid_id, int64_t precision, bool& first, int64_t& dx, int64_t& dy, int64_t& dz);
+	void calc_deltas(const int_coords_t &curr_atom_coords, const double_coords_t* rc, const vector<dist6_t>& curr_centroids, int centroid_id, int64_t precision, 
+		bool& first, bool &equal_q, int64_t& dx, int64_t& dy, int64_t& dz);
 
-	bool check_in_dict(const int_coords_t& ic);
-	void add_to_dict(const int_coords_t& ic);
+	int check_in_dict(const int_coords_t& ic);
+	void add_to_dict(const int_coords_t& ic, int id);
 	bool need_run_clean();
 
 public:
@@ -58,6 +62,7 @@ public:
 	{
 		init_centroids();
 		init_reference_atoms();
+		init_centroid_counts();
 		init_prediction_precision();
 	}
 
@@ -66,6 +71,7 @@ public:
 	void init_centroids();
 	void init_reference_atoms();
 	void init_prediction_precision();
+	void init_centroid_counts();
 
 	void restart_chain();
 
@@ -81,6 +87,13 @@ public:
 
 	void start_aa(aa_t aa)
 	{
+/*		aa_prev = move(aa_curr);
+		aa_curr.type = aa;
+		aa_curr.atoms.clear();
+
+		atoms_prev = move(atoms_curr);
+		atoms_curr.clear();*/
+
 		swap(aa_prev, aa_curr);
 		aa_curr.type = aa;
 		aa_curr.atoms.clear();
@@ -96,6 +109,14 @@ public:
 
 	uint32_t calc_ctx(const aa_t aa, const atom_t atom);
 	uint32_t get_max_ctx();
+
+	pair<uint32_t*, size_t> get_centroid_counts(uint32_t id)
+	{
+		if (id >= centroid_counts.size() || centroid_counts[id].empty())
+			return make_pair(nullptr, 0);
+
+		return make_pair(centroid_counts[id].data(), centroid_counts[id].size());
+	}
 
 	void set_resolution(int64_t _res_backbone, int64_t _res_sidechain)
 	{
@@ -134,10 +155,11 @@ public:
 		return reduce_coord((int64_t)val, resolution);
 	}
 
-	void clean_model();
+	bool clean_model();
 
-	bool predict(int atom_pos, int &centroid_id, int &no_centroids, bool &first, int64_t&dx, int64_t&dy, int64_t&dz);
-	bool decode(atom_t atom, int centroid_id, bool first, int64_t dx, int64_t dy, int64_t dz, int_coords_t& dc);
+	bool predict(int atom_pos, int &centroid_id, int &no_centroids, bool &first, bool &equal_q, int64_t&dx, int64_t&dy, int64_t&dz);
+	bool decode_part1(atom_t atom, int centroid_id, pair<int_coords_t, int_coords_t> &q_both);
+	void decode_part2(atom_t atom, const int_coords_t &q, int64_t dx, int64_t dy, int64_t dz, int_coords_t& dc);
 };
 
 // EOF

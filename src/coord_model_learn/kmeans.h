@@ -181,7 +181,6 @@ T kmeans(
 	}
 
 	// Sort centroids from the most popular
-
 	vector<pair<int, int>> centr_occ;
 	for (int i = 0; i < K; ++i)
 		centr_occ.emplace_back(num_assigned[i], i);

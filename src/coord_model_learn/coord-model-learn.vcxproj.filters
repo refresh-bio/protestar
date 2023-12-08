@@ -19,16 +19,13 @@
     <ClCompile Include="..\core\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\core\io.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\parsers\cif.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\parsers\conversion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\parsers\input.cpp">
+    <ClCompile Include="..\parsers\cif-input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\parsers\input-load.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,9 +68,6 @@
     <ClInclude Include="..\core\io.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\parsers\cif.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\parsers\columns.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -83,7 +77,10 @@
     <ClInclude Include="..\parsers\entries.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\parsers\input.h">
+    <ClInclude Include="..\parsers\cif-input.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\parsers\input-load.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

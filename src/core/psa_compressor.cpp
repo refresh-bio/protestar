@@ -3,8 +3,8 @@
 #include "../compressors/pdb-compressor.h"
 #include "../compressors/pae-compressor.h"
 #include "../compressors/conf-compressor.h"
-#include "../parsers/cif.h"
-#include "../parsers/pdb.h"
+#include "../parsers/cif-input.h"
+#include "../parsers/pdb-input.h"
 #include "../parsers/json.h"
 #include "io.h"
 #include "../libs/refresh/tar/tar.h"
@@ -112,8 +112,8 @@ bool CPSACompressor::add_new()
 	for (int i = 0; i < no_workers; ++i)
 		thr_workers.emplace_back([&, i] {
 		
-		CifCompressor cif_compressor(true);
-		PDBCompressor pdb_compressor(true);
+		CifCompressor cif_compressor;
+		PDBCompressor pdb_compressor;
 		PAECompressor pae_compressor;
 		ConfCompressor conf_compressor;
 
@@ -134,8 +134,8 @@ bool CPSACompressor::add_new()
 
 		const pair<int, int> already_exits_flag(-1, -1);
 
-		Cif cif(params.minimal);
-		Pdb pdb(params.minimal);
+		CifInput cif(params.minimal);
+		PdbInput pdb(params.minimal);
 		JSON_PAE pae;
 		matrix_t matrix;
 
@@ -143,7 +143,7 @@ bool CPSACompressor::add_new()
 
 		string file_name;
 		file_type_t file_type;
-		bool in_tar_gzipped;
+		bool in_tar_gzipped = false;
 
 		while (true)
 		{

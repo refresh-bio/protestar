@@ -1,4 +1,4 @@
-#include "input.h"
+#include "input-load.h"
 
 #include <fstream>
 #include <stdexcept>
@@ -6,7 +6,7 @@
 #include "../core/io.h"
 
 /*****************************************************************************/
-size_t StructFile::load(const std::string& fileName) {
+size_t StructFileInput::load(const std::string& fileName) {
 
 	// clear entries if any
 	clearEntries();
@@ -29,7 +29,7 @@ size_t StructFile::load(const std::string& fileName) {
 }
 
 /*****************************************************************************/
-size_t StructFile::load(const std::vector<uint8_t>& file_data)
+size_t StructFileInput::load(const std::vector<uint8_t>& file_data)
 {
 	clearEntries();
 

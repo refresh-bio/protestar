@@ -39,8 +39,10 @@ struct hash_pair {
 class ModelLearn : public Model
 {
 	const size_t max_no_records = 1000000;
+	const size_t no_kmeans_repetitions = 10;
 	int no_threads = 4;
 	int no_threads2 = 8;
+	const uint32_t max_init_cnt = 1000;
 
 	unordered_map<atom_ctx, unordered_map<atom_t, vector<int>>, hash_pair> atom_distances;
 //	map<atom_ctx, unordered_map<atom_t, vector<int>>> atom_distances;
@@ -51,6 +53,7 @@ class ModelLearn : public Model
 
 	map<atom_ctx, vector<dist6_t>> tetrahedrons;
 	map<atom_ctx, vector<dist6_t>> centroids;
+	map<atom_ctx, vector<uint32_t>> centroid_counts;
 
 	mt19937 mt;
 
@@ -64,7 +67,7 @@ class ModelLearn : public Model
 
 	int atom_pos(const aa_t aa, const atom_t atom);
 
-	pair<vector<dist6_t>, int> find_centroids(const vector<dist6_t>& vec);
+	tuple<vector<dist6_t>, int, vector<uint32_t>> find_centroids(const vector<dist6_t>& vec);
 
 	template <class T, int NDims, int NLast>
 	T calculate_cost(
@@ -85,6 +88,22 @@ class ModelLearn : public Model
 		}
 
 		return cost / points.size();
+	}
+
+	double est_entropy(const vector<int>& assignments, int k)
+	{
+		vector<int> n_ass(k);
+
+		for (const auto x : assignments)
+			++n_ass[x];
+
+		double ent = 0;
+		double tot = (double)assignments.size();
+
+		for (const auto x : n_ass)
+			ent += -log2((double)x / tot) * x / tot;
+
+		return ent;
 	}
 
 public:

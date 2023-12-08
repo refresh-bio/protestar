@@ -1,10 +1,10 @@
 #include "psa_decompressor.h"
 #include <filesystem>
-#include "../parsers/cif.h"
-#include "../parsers/pdb.h"
+#include "../parsers/cif-output.h"
+#include "../parsers/pdb-output.h"
 #include "../parsers/json.h"
-#include "../compressors/cif-compressor.h"
-#include "../compressors/pdb-compressor.h"
+#include "../compressors/cif-decompressor.h"
+#include "../compressors/pdb-decompressor.h"
 #include "../compressors/pae-compressor.h"
 #include "../compressors/conf-compressor.h"
 
@@ -25,16 +25,16 @@ bool CPSADecompressor::get_files()
 	for (int i = 0; i < params.no_threads; ++i)
 		thr_workers.emplace_back([&, i] {
 
-		CifCompressor cif_compressor(false);
-		PDBCompressor pdb_compressor(false);
+		CifDecompressor cif_decompressor;
+		PDBDecompressor pdb_decompressor;
 		PAECompressor pae_compressor;
 		ConfCompressor conf_compressor;
 
 		data_t data_packed;
 		uint64_t metadata;
 
-		Cif cif_out(params.minimal);
-		Pdb pdb_out(params.minimal);
+		CifOutput cif_out(params.minimal);
+		PdbOutput pdb_out(params.minimal);
 		JSON_PAE pae_out;
 		data_t data_unpacked;
 
@@ -75,7 +75,7 @@ bool CPSADecompressor::get_files()
 
 					string struct_name = name_ft.first;
 
-					cif_compressor.decompress(&cif_out, data_packed, cif_desc.raw_size, struct_name);
+					cif_decompressor.decompress(&cif_out, data_packed, cif_desc.raw_size, struct_name);
 					cif_out.store();
 					cif_out.save(params.outdir + struct_name + ".cif");
 				}
@@ -110,7 +110,7 @@ bool CPSADecompressor::get_files()
 
 					string struct_name = name_ft.first;
 
-					pdb_compressor.decompress(&pdb_out, data_packed, pdb_desc.raw_size, struct_name);
+					pdb_decompressor.decompress(&pdb_out, data_packed, pdb_desc.raw_size, struct_name);
 					pdb_out.store();
 					pdb_out.save(params.outdir + struct_name + ".pdb");
 				}

@@ -1,5 +1,6 @@
 #include "atom_extractor.h"
 #include "../core/utils.h"
+#include "../parsers/input-base.h"
 
 // *****************************************************************
 int64_t coords_distance2(const int_coords_t& a, const int_coords_t& b)
@@ -18,21 +19,31 @@ int coords_distance(const int_coords_t& a, const int_coords_t& b)
 }
 
 // *****************************************************************
+double est_delta_coding_cost(const int_coords_t& a, const int_coords_t& b)
+{
+    int64_t dx = abs(a.x - b.x);
+    int64_t dy = abs(a.y - b.y);
+    int64_t dz = abs(a.z - b.z);
+
+    return log2(1 + dx) + log2(1 + dy) + log2(1 + dz);
+}
+
+// *****************************************************************
 bool Protein::parse_chains(const LoopEntry *entry)
 {
     v_chains.clear();
 
-    auto col_group_PDB = entry->findColumn(StructFile::Columns::group_PDB);
-    auto col_id = entry->findColumn(StructFile::Columns::id);      
-    auto col_auth_atom_id = entry->findColumn(StructFile::Columns::auth_atom_id);
-    auto col_auth_comp_id = entry->findColumn(StructFile::Columns::auth_comp_id);
-    auto col_auth_asym_id = entry->findColumn(StructFile::Columns::auth_asym_id);
-    auto col_auth_seq_id = entry->findColumn(StructFile::Columns::auth_seq_id);
-    auto col_Cartn_x = entry->findColumn(StructFile::Columns::Cartn_x);
-    auto col_Cartn_y = entry->findColumn(StructFile::Columns::Cartn_y);
-    auto col_Cartn_z = entry->findColumn(StructFile::Columns::Cartn_z);
-    auto col_B_factor = entry->findColumn(StructFile::Columns::B_iso_or_equiv);
-    auto col_type_symbol = entry->findColumn(StructFile::Columns::type_symbol);
+    auto col_group_PDB = entry->findColumn(StructFileBase::Columns::group_PDB);
+    auto col_id = entry->findColumn(StructFileBase::Columns::id);
+    auto col_auth_atom_id = entry->findColumn(StructFileBase::Columns::auth_atom_id);
+    auto col_auth_comp_id = entry->findColumn(StructFileBase::Columns::auth_comp_id);
+    auto col_auth_asym_id = entry->findColumn(StructFileBase::Columns::auth_asym_id);
+    auto col_auth_seq_id = entry->findColumn(StructFileBase::Columns::auth_seq_id);
+    auto col_Cartn_x = entry->findColumn(StructFileBase::Columns::Cartn_x);
+    auto col_Cartn_y = entry->findColumn(StructFileBase::Columns::Cartn_y);
+    auto col_Cartn_z = entry->findColumn(StructFileBase::Columns::Cartn_z);
+    auto col_B_factor = entry->findColumn(StructFileBase::Columns::B_iso_or_equiv);
+    auto col_type_symbol = entry->findColumn(StructFileBase::Columns::type_symbol);
 
     if (!col_group_PDB || !col_id || !col_auth_atom_id || !col_auth_comp_id || !col_auth_asym_id || !col_auth_seq_id || !col_Cartn_x || !col_Cartn_y || !col_Cartn_z || !col_B_factor || !col_type_symbol)
         return false;
@@ -68,7 +79,8 @@ bool Protein::parse_chains(const LoopEntry *entry)
             for (j = i + 1; j < group_PDB.size(); ++j)
                 if (auth_asym_id[j] != asym_id)
                     break;
-            v_chains.back().aa.reserve(auth_seq_id[j - 1]);
+            if(auth_seq_id[j - 1] > 0)
+                v_chains.back().aa.reserve(auth_seq_id[j - 1]);
         }
 
         if (auth_seq_id[i] != seq_id)

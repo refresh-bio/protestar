@@ -10,7 +10,7 @@
 #include <mutex>
 #include <atomic>
 
-#include "../parsers/cif.h"
+#include "../parsers/cif-input.h"
 #include "../common/atom_extractor.h"
 #include "model_learn.h"
 
@@ -61,7 +61,7 @@ bool parse_args(int argc, char** argv)
 // ************************************************************************************
 void gather_distances(const string& file_name)
 {
-    Cif cif(true);
+    CifInput cif(true);
     Protein protein;
 
 //    cerr << file_name << "                        \r";
@@ -69,7 +69,7 @@ void gather_distances(const string& file_name)
     cif.load(file_name);
     cif.parse();
 
-    auto entry = cif.findEntry(cif.getAtomEntryName());
+    auto entry = cif.findEntry(cif.ENTRY_ATOM_SITE);
 
     if (!entry)
         return;
@@ -84,7 +84,7 @@ void gather_distances(const string& file_name)
 // ************************************************************************************
 void gather_tetrahedrons(const string& file_name)
 {
-    Cif cif(true);
+    CifInput cif(true);
     Protein protein;
 
 //    cerr << file_name << "                        \r";
@@ -94,7 +94,7 @@ void gather_tetrahedrons(const string& file_name)
 
 //    protein.parse_chains(&cif);
 
-    auto entry = cif.findEntry(cif.getAtomEntryName());
+    auto entry = cif.findEntry(cif.ENTRY_ATOM_SITE);
 
     if (!entry)
         return;

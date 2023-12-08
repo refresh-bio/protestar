@@ -76,6 +76,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\3rd-party\dependencies-zstd/lib;..\3rd-party\mimalloc\include;..\libs\refresh\archive;..\libs\refresh\compression;..\libs\refresh\range_coder;..\3rd-party\dependencies-zlib;../3rd-party/sajson;../3rd-party/vclclass;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>false</VcpkgEnabled>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -154,30 +157,27 @@
     <ClCompile Include="..\common\aa_atoms.cpp" />
     <ClCompile Include="..\common\atom_extractor.cpp" />
     <ClCompile Include="..\common\model.cpp" />
-    <ClCompile Include="..\common\tetrahedron.cpp" />
-    <ClCompile Include="..\compressors\cif-compressor.cpp" />
     <ClCompile Include="..\compressors\conf-compressor.cpp" />
     <ClCompile Include="..\compressors\model_compress.cpp" />
     <ClCompile Include="..\compressors\pae-compressor.cpp" />
-    <ClCompile Include="..\compressors\pdb-compressor.cpp" />
     <ClCompile Include="..\compressors\serializer.cpp" />
-    <ClCompile Include="..\compressors\struct-compressor.cpp" />
+    <ClCompile Include="..\compressors\struct-base.cpp" />
+    <ClCompile Include="..\compressors\struct-decompressor.cpp" />
     <ClCompile Include="..\core\collection.cpp" />
-    <ClCompile Include="..\core\io.cpp" />
     <ClCompile Include="..\core\psa_base.cpp" />
     <ClCompile Include="..\core\psa_decompression_library.cpp" />
     <ClCompile Include="..\core\utils.cpp" />
-    <ClCompile Include="..\parsers\cif.cpp" />
+    <ClCompile Include="..\parsers\cif-output.cpp" />
     <ClCompile Include="..\parsers\conversion.cpp" />
-    <ClCompile Include="..\parsers\input.cpp" />
-    <ClCompile Include="..\parsers\json.cpp" />
-    <ClCompile Include="..\parsers\pdb.cpp" />
+    <ClCompile Include="..\parsers\json-base.cpp" />
+    <ClCompile Include="..\parsers\pdb-output.cpp" />
     <ClCompile Include="lib-cxx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\core\collection.h" />
     <ClInclude Include="..\core\psa_base.h" />
     <ClInclude Include="..\core\psa_decompressor_library.h" />
+    <ClInclude Include="..\core\utils.h" />
     <ClInclude Include="protestar-api.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

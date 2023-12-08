@@ -1,4 +1,4 @@
-#include "cif.h"
+#include "cif-input.h"
 #include "conversion.h"
 
 #include <iostream>
@@ -8,9 +8,8 @@
 
 using namespace std;
 
-
 /*****************************************************************************/
-void Cif::parse() {
+void CifInput::parse() {
 
 	char* fileEnd = fileBuffer.data() + fileBufferBytes;
 	char* p = fileBuffer.data();
@@ -21,6 +20,32 @@ void Cif::parse() {
 	bool is_first = true;
 	bool prev_was_added = false;
 
+	// first pass - find multiline fields
+	while ((p = std::find(p, fileEnd, ';')) != fileEnd) {
+		if (*(p - 1) == '\n' || *(p - 1) == '\r') {
+			*p = StringColumn::MULTILINE_VALUE_MARKER;
+
+			//	std::cout << "B:" << string(p, p + 20) << endl;
+
+				// find closing semicolon
+			do {
+				++p;
+				p = std::find(p, fileEnd, ';');
+				if (p == fileEnd) {
+					throw std::runtime_error("Incorrectly formated CIF file (no matching semicolon for multiline text field)");
+				}
+
+			} while (*(p - 1) != '\n' && *(p - 1) != '\r');
+
+			*p = StringColumn::MULTILINE_VALUE_MARKER;
+
+			//	std::cout << "E:" << string(p - 20, p + 1) << endl;	
+		}
+		++p;
+	}
+
+	p = fileBuffer.data();
+	// second pass
 	while (p < fileEnd) {
 
 		string sectionName(p, std::find_if(p, fileEnd, [](char c) { return c == '.' || c == '\r' || c == '\n'; }));
@@ -57,7 +82,17 @@ void Cif::parse() {
 
 			// fill auxiliary pointer table
 			bool isAtomLoop = (loopName == ENTRY_ATOM_SITE);
-		
+
+			// get column offsets
+			struct Alignment {
+				int leftOffset = -1;
+				int rightOffset = -1;
+				bool leftAligned = true;
+				bool rightAligned = true;
+			};
+
+			std::vector<Alignment> alignments(colnames.size());
+
 			// the loop below will be executed:
 			// - once for standard tables,
 			//  multiple times for atom table
@@ -67,9 +102,13 @@ void Cif::parse() {
 
 				// get first token
 				string firstToken(p, std::find_if(p, fileEnd, is_space));
-				
+
+				std::vector<int> widths;
+
 				int numRows = 0;
 				do {
+					char* rowBegin = p;
+
 					for (int ic = 0; ic < (int)colnames.size(); ++ic) {
 						// extract token
 						char* token = p;
@@ -84,6 +123,20 @@ void Cif::parse() {
 							++p;
 							p = find(p, fileEnd, ';');
 							++p;
+
+							// disable alignment
+							alignments[ic].leftAligned = false;
+							alignments[ic].rightAligned = false;
+						}
+						else if (*p == StringColumn::MULTILINE_VALUE_MARKER) {
+
+							++p;
+							p = find(p, fileEnd, StringColumn::MULTILINE_VALUE_MARKER);
+							++p;
+
+							// disable alignment
+							alignments[ic].leftAligned = false;
+							alignments[ic].rightAligned = false;
 						}
 						else if (*p == '\"') {
 							++p;
@@ -98,6 +151,23 @@ void Cif::parse() {
 						++p;
 						table.push_back(token);
 
+
+						if (numRows == 0) {
+							// first row - initialize offsets
+							alignments[ic].leftOffset = token - rowBegin;
+							alignments[ic].rightOffset = p - rowBegin;
+						}
+						else {
+							// verify if offsets agree
+							if (token - rowBegin != alignments[ic].leftOffset) {
+								alignments[ic].leftAligned = false;
+							}
+
+							if (p - rowBegin != alignments[ic].rightOffset) {
+								alignments[ic].rightAligned = false;
+							}
+						}
+
 						// omit white spaces (moves to next line at the very end)
 						p = find_if_not(p, fileEnd, is_space);
 					}
@@ -107,7 +177,8 @@ void Cif::parse() {
 					if (*p == '#') {
 						carryOn = false;
 						break;
-					} else if (isAtomLoop && !std::equal(firstToken.c_str(), firstToken.c_str() + firstToken.length(), p)) {
+					}
+					else if (isAtomLoop && !std::equal(firstToken.c_str(), firstToken.c_str() + firstToken.length(), p)) {
 						break;
 					}
 
@@ -117,10 +188,36 @@ void Cif::parse() {
 				int n_cols = (int)colnames.size();
 				for (int ic = 0; ic < n_cols; ++ic) {
 					// try to read as numeric column
-					AbstractColumn* col = NumericColumn::create(colnames[ic], table, 0, ic, n_cols);
+					int width = 0;
+					if (ic < n_cols - 1) {
+
+						// left aligment has top priority
+						if (alignments[ic].leftAligned) {
+							width = table[ic] - table[ic + 1];
+						}
+						else {
+							width = alignments[ic].rightAligned ? table[ic + 1] - table[ic] : 0;
+						}
+					}
+					else {
+						// last column - find newline character
+						char* p = table[ic];
+						while (*p != '\n' && *p != '\r') {
+							++p;
+						}
+
+						if (alignments[ic].leftAligned) {
+							width = table[ic] - p;
+						}
+						else {
+							width = alignments[ic].rightAligned ? p - table[ic] : 0;
+						}
+					}
+
+					AbstractColumn* col = NumericColumn::create(colnames[ic], table, width, ic, n_cols);
 
 					if (col == nullptr) {
-						col = new StringColumn(colnames[ic], table, 0, ic, n_cols, dataBufferPos);
+						col = new StringColumn(colnames[ic], table, width, ic, n_cols, dataBufferPos);
 					}
 
 					entry->addColumn(col);
@@ -144,7 +241,7 @@ void Cif::parse() {
 
 			do {
 				p = find(p, fileEnd, '\n');
-				
+
 				// go to next line
 				if (p != fileEnd) {
 					++p;
@@ -161,7 +258,7 @@ void Cif::parse() {
 			if (!minimal_mode || MINIMAL_SECTIONS.count(sectionName) || is_first || (prev_was_added && sectionName == "#"s))
 			{
 				addEntry(entry);
-				if(sectionName != "#"s)
+				if (sectionName != "#"s)
 					prev_was_added = true;
 				else
 					prev_was_added = false;
@@ -179,53 +276,3 @@ void Cif::parse() {
 	return;
 }
 
-/*****************************************************************************/
-size_t Cif::store()
-{
-	char* p = fileBuffer.data();
-	LoopEntry::Type prevType = LoopEntry::Type::Standard;
-
-	for (const Entry* e: entries) {
-		if (!e->isLoop) {
-			const BlockEntry* be = dynamic_cast<const BlockEntry*>(e);
-//			realloc_filebuf_if_necessary(p, be->size);
-			copy_n(be->data, be->size, p);
-			p += be->size;
-		}
-		else {
-			const LoopEntry* le = dynamic_cast<const LoopEntry*>(e);
-//			realloc_filebuf_if_necessary(p);
-			
-			// store loop header when current or previous type is standard 
-			if (le->getType() == LoopEntry::Type::Standard || prevType == LoopEntry::Type::Standard) {
-
-				p += Conversions::String2PChar("loop_\n", p);
-	
-				// save column names 
-				for (const auto c : le->getColumns()) {
-//					realloc_filebuf_if_necessary(p);
-					p += Conversions::String2PChar(e->name, p);
-					*p++ = '.';
-					p += Conversions::String2PChar(c->name, p);
-					*p++ = '\n';
-				}
-			}
-
-			// save rows
-			for (int ir = 0; ir < le->getRowCount(); ++ir) {
-				for (int ic = 0; ic < (int) le->getColumns().size(); ++ic) {
-//					realloc_filebuf_if_necessary(p);
-					le->getColumns()[ic]->output(ir, p);
-					*p++ = ' ';
-				}
-//				realloc_filebuf_if_necessary(p);
-				*p++ = '\n';
-			}
-
-			prevType = le->getType();
-		}
-	}
-	
-	fileBufferBytes = p - fileBuffer.data();
-	return fileBufferBytes;
-}

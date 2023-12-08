@@ -10,6 +10,7 @@ inline const char* str2chr(const std::string& s) { return s.c_str(); }
 /******************************************************************/
 class AbstractColumn {
 public:
+   
     //using OutputFunc = std::function<void(int, char*&)>;
 
     const bool isNumeric;
@@ -167,13 +168,58 @@ private:
 /******************************************************************/
 class StringColumn : public Column<char*> {
 public:
+    static const char MULTILINE_VALUE_MARKER = 2;
+  
     char* const raw;
     size_t size_bytes;
 
     void output(int id, char*& dst) const override {
         char* v = values[id];
+        char* p = dst;
+
+        bool multiline = false;
+        // used only by CIF multiline fields
+        if (*v == MULTILINE_VALUE_MARKER) {
+            *p++ = '\n';
+            *p++ = ';';
+            ++v;
+            multiline = true;
+        }
+
         while (*v) {
-            *dst++ = *v++;
+            *p++ = *v++;
+        }
+        int bytes = p - dst;
+
+        if (width > 0) {
+            // right align string 
+            int delta = width - bytes;
+            for (int i = bytes - 1; i >= 0; --i) {
+                dst[i + delta] = dst[i];
+            }
+
+            for (int i = 0; i < delta; ++i) {
+                dst[i] = ' ';
+            }
+
+            dst += width;
+        }
+        else if (width < 0) {
+            // left align string
+            dst += bytes;
+            int delta = -width - bytes;
+            for (int i = 0; i < delta; ++i) {
+                *dst = ' ';
+                ++dst;
+            }
+        }
+        else {
+            dst += bytes;
+        }
+
+        if (multiline) {
+            *(dst - 1) = ';';
+            *dst++ = '\n';
         }
     }
 

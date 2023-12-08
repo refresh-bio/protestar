@@ -126,7 +126,7 @@ private:
 		auto u = (dist_q1 * dist_q1 - dist_q2 * dist_q2 + u2 * u2) / (2 * u2);
 		auto v = (dist_q1 * dist_q1 - dist_q3 * dist_q3 + u3 * u3 + v3 * v3 - 2 * u * u3) / (2 * v3);
 		auto w2 = dist_q1 * dist_q1 - u * u - v * v;
-		double w = w2 > 0 ? sqrt(dist_q1 * dist_q1 - u * u - v * v) : 0;
+		double w = w2 > 0 ? sqrt(w2) : 0;
 
 		auto wx = w * w_axis;
 

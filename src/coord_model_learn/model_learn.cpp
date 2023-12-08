@@ -1,6 +1,7 @@
 #include <utility>
 #include <algorithm>
 #include <ostream>
+#include <fstream>
 #include <cmath>
 #include <tuple>
 #include <atomic>
@@ -334,8 +335,9 @@ void ModelLearn::calculate_centroids()
 
 			{
 				lock_guard<mutex> lck(mtx);
-				centroids[v_atom_ctx[id]] = ctr.first;
-				prediction_precision[v_atom_ctx[id]] = ctr.second;
+				centroids[v_atom_ctx[id]] = get<0>(ctr);
+				prediction_precision[v_atom_ctx[id]] = get<1>(ctr);
+				centroid_counts[v_atom_ctx[id]] = get<2>(ctr);
 			}
 		}
 	});
@@ -353,48 +355,68 @@ void ModelLearn::calculate_centroids()
 }
 
 // *****************************************************************
-pair<vector<ModelLearn::dist6_t>, int> ModelLearn::find_centroids(const vector<dist6_t>& vec)
+tuple<vector<ModelLearn::dist6_t>, int, vector<uint32_t>> ModelLearn::find_centroids(const vector<dist6_t>& vec)
 {
 	if (vec.size() == 1)
-		return make_pair(vec, 0);
+		return make_tuple(vec, 0, vector<uint32_t>{max_init_cnt});
 
 	vector<array<double, 6>> vd;
 	vd.reserve(vec.size());
 
 	vector<array<double, 6>> found_centroids, best_centroids;
-	vector<int> found_assignments;
-//	int best_k;
+	vector<int> found_assignments, best_assignments;
 	double best_cost = numeric_limits<double>::max();
 	double best_raw_cost = numeric_limits<double>::max();
 
 	for (const auto& x : vec)
 		vd.emplace_back(array<double, 6>{(double)x[0], (double)x[1], (double)x[2], (double)x[3], (double)x[4], (double)x[5]});
 
-	for (int k = 1; k <= max_no_centroids; ++k)
+	mt19937 mt;
+
+	for (size_t rep = 0; rep < no_kmeans_repetitions; ++rep)
 	{
-//		kmeans<double, 6, SquaredEuclidean<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 100);
-		kmeans<double, 6, Euclidean<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 200);
-//		kmeans<double, 6, TetrahedronPrediction<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 100);
-		double cost = calculate_cost<double, 6, 6>(vd, found_centroids, found_assignments);
+		shuffle(vd.begin(), vd.end(), mt);
 
-		double ext_cost = cost + log2((double)k);
-
-		if (ext_cost < best_cost)
+		for (int k = 1; k <= max_no_centroids; ++k)
 		{
-			best_cost = ext_cost;
-			best_raw_cost = cost;
-//			best_k = k;
-			best_centroids = found_centroids;
+			//		kmeans<double, 6, SquaredEuclidean<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 100);
+			kmeans<double, 6, Euclidean<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 200);
+			//		kmeans<double, 6, TetrahedronPrediction<double, 6>>(vd, found_centroids, found_assignments, k, 0.001, 100);
+			double cost = calculate_cost<double, 6, 6>(vd, found_centroids, found_assignments);
+
+			//		double cen_ent = log2((double)k);
+			double cen_ent = est_entropy(found_assignments, k);
+
+			double ext_cost = cost + cen_ent;
+
+			if (ext_cost < best_cost)
+			{
+				best_cost = ext_cost;
+				best_raw_cost = cost;
+				best_centroids = found_centroids;
+				best_assignments = found_assignments;
+			}
 		}
 	}
 
 	vector<dist6_t> ret;
 	ret.reserve(best_centroids.size());
 
+	vector<uint32_t> n_ass(best_centroids.size());
+
+	for (const auto x : best_assignments)
+		++n_ass[x];
+
+	// Normalize counts
+	int mv = *max_element(n_ass.begin(), n_ass.end());
+
+	for (auto& x : n_ass)
+		x = (uint32_t)(((uint64_t) x * max_init_cnt + mv - 1) / mv);
+
 	for (const auto& x : best_centroids)
 		ret.emplace_back(array<int, 6>{ (int)x[0], (int)x[1], (int)x[2], (int)x[3], (int)x[4], (int)x[5] });
 
-	return make_pair(ret, (int)(best_raw_cost));
+	return make_tuple(ret, (int)(best_raw_cost), n_ass);
 }
 
 // *****************************************************************
@@ -418,7 +440,7 @@ void ModelLearn::serialize_model(const string &out_name)
 
 	for (const auto& me : centroids)
 	{
-		ofs << "    centroids[packed_atom_ctx(aa_t::" << aa_to_str(me.first.first) << ", atom_t::" << atom_to_str(me.first.second) << ")] = vector<dist6_t>{";
+ 		ofs << "    centroids[packed_atom_ctx(aa_t::" << aa_to_str(me.first.first) << ", atom_t::" << atom_to_str(me.first.second) << ")] = vector<dist6_t>{" << endl << "\t\t ";
 
 		string sep = "";
 
@@ -462,6 +484,22 @@ void ModelLearn::serialize_model(const string &out_name)
 
 	ofs << "}\n\n";
 
+	// *** Prediction precision
+	ofs << "// *****************************************************************\n\n";
+	ofs << "void ModelCompress::init_centroid_counts()\n";
+	ofs << "{\n";
+
+	ofs << "    centroid_counts.resize(max_packed_atom_ctx);\n";
+
+	for (const auto& cc : centroid_counts)
+	{
+		ofs << "    centroid_counts[packed_atom_ctx(aa_t::" << aa_to_str(cc.first.first) << ", atom_t::" << atom_to_str(cc.first.second) << ")] = {";
+		for (size_t i = 0; i < cc.second.size() - 1; ++i)
+			ofs << cc.second[i] << ", ";
+		ofs << cc.second.back() << "};\n";
+	}
+
+	ofs << "}\n\n";
 	ofs << "// EOF\n";
 }
 
