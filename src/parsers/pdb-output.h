@@ -3,6 +3,7 @@
 #include "entries.h"
 #include "input-save.h"
 #include "pdb-base.h"
+#include "columns.h"
 
 #include <functional>
 #include <vector>
@@ -19,4 +20,8 @@ public:
     }
 
     size_t store();
+
+protected:
+    void store_row(const LoopEntry* entry, int ir, char*& p);
+    void store_element(const AbstractColumn* column, int ir, char*& p);
 };

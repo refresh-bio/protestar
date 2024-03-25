@@ -203,11 +203,27 @@ int main() {
       
     };
 
+    std::vector<string> cif_ligands {
+   //     "ligands/1uw6.cif",
+        "ligands/3u8m.cif",
+        "ligands/3zdg.cif",
+        "ligands/4um3.cif",
+        "ligands/4zru.cif"
+    };
+
+    std::vector<string> pdb_ligands {
+    //    "ligands/1uw6.pdb",
+    //    "ligands/3u8m.pdb",
+        "ligands/3zdg.pdb",
+    //    "ligands/4um3.pdb",
+    //    "ligands/4zru.pdb"
+    };
+
     try {
         cout << "CIF" << endl;
-        test_cif(cif_files);
+       //test_cif(cif_ligands);
         cout << endl << "PDB" << endl;
-        test_pdb(pdb_files);
+        test_pdb(pdb_ligands);
         
     }
     catch (std::runtime_error& err) {

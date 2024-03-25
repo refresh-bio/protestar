@@ -44,7 +44,7 @@ public:
 class LoopEntry : public Entry {
 public:
     enum class Type {
-        Standard, Atom, Hetatm
+        Standard, Atom, Hetatm, Sigatm, Anisou, Siguij
     };
 
     Type getType() const { return type; }
@@ -57,11 +57,24 @@ private:
 public:
     
     static Type str2type(const std::string& s) {
-        return (s == "ATOM")
-            ? LoopEntry::Type::Atom
-            : ( (s == "HETATM")
-                ? LoopEntry::Type::Hetatm
-                : LoopEntry::Type::Standard);
+        if (s == "ATOM")            { return LoopEntry::Type::Atom; } 
+        else if (s == "SIGATM")     { return LoopEntry::Type::Sigatm; }
+        else if (s == "HETATM")     { return LoopEntry::Type::Hetatm; }
+        else if (s == "ANISOU")     { return LoopEntry::Type::Anisou; } 
+        else if (s == "SIGUIJ")     { return LoopEntry::Type::Siguij; } 
+      
+        return LoopEntry::Type::Standard;
+    }
+
+    static std::string type2str(Type type) {
+        switch (type) {
+        case Type::Atom: return "ATOM";
+        case Type::Hetatm: return "HETATM";
+        case Type::Anisou: return "ANISOU";
+        case Type::Siguij: return "SIGUIJ";
+        case Type::Sigatm: return "SIGATM";
+        case Type::Standard: return "<standard>";
+        }
     }
 
     const std::vector<AbstractColumn*>& getColumns() const { return columns; }

@@ -248,8 +248,26 @@ public:
 			p += Conversions::Int2PChar(before, p);
 			*p++ = '.';
 
-			// FIXME: this works for at most 5 decimal places
-			memcpy(p, Conversions::digits + after * 5 + (5 - decimal_places), decimal_places);
+			if (decimal_places <= 5) {
+				memcpy(p, Conversions::digits + after * 5 + (5 - decimal_places), decimal_places);
+			}
+			else {
+				// support ten decimal places
+				if (decimal_places > 10) {
+					int to_cut = decimal_places - 10;
+					decimal_places = 10;
+					v /= Conversions::powers10[to_cut];
+				}
+				
+				T dig1 = v / (T)100000;
+				T dig2 = v - dig1 * (T)100000;
+
+				int ndig = Conversions::NDigits(dig1);
+
+				memcpy(p, Conversions::digits + dig1 * 5 + (5 - ndig), ndig);
+				memcpy(p + ndig, Conversions::digits + dig2 * 5, 5);
+			}
+			
 			p += decimal_places;		
 		}
 		else {

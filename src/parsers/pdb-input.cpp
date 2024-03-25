@@ -7,33 +7,38 @@
 using namespace std;
 
 void PdbInput::parse() {
+	
+	const int SECTION_NAME_LEN = 6;
+	
 	char* fileEnd = fileBuffer.data() + fileBufferBytes;
 	char* p = fileBuffer.data();
 
-	std::vector<char*> rows;
-	rows.reserve(count(p, fileEnd, '\n'));
+	std::unordered_map<LoopEntry::Type, std::vector<char*>> entries2rows;
+
+	int n_lines = count(p, fileEnd, '\n');
+	
+	// reserve memory for all pointer tables for all
+	for (const auto& elem : COLUMN_DEFS) {
+		entries2rows[elem.first].reserve(n_lines);
+	}
 
 	while (p < fileEnd) {
 
-		string sectionName(p, std::find(p, p + 6, ' '));
+		string sectionName(p, std::find(p, p + SECTION_NAME_LEN, ' '));
 
 		bool need_ommit = minimal_mode && !MINIMAL_SECTIONS.count(sectionName);
-		auto type = LoopEntry::str2type(sectionName);
+		LoopEntry::Type type = LoopEntry::str2type(sectionName);
 
 		if (type != LoopEntry::Type::Standard) {
 
-			LoopEntry* entry = new LoopEntry(sectionName, type);
+			for (auto& rows : entries2rows) {
+				rows.second.clear();
+			}
 
-			//			char* section = p;
-
-						// get row pointers
-			rows.clear();
-			rows.push_back(p);
-
-			bool ignore = false;
-			bool agree = false;
-
+			entries2rows[type].push_back(p);
+			
 			int lineLength = (int)(find(p, fileEnd, '\n') - p);
+			LoopEntry::Type localType = type;
 
 			do {
 				char* q = find(p, fileEnd, '\n');
@@ -45,44 +50,60 @@ void PdbInput::parse() {
 				p = q;
 
 				++p; // go to next line
-				string localName(p, find(p, p + 6, ' '));
+				string localName(p, find(p, p + SECTION_NAME_LEN, ' '));
+				localType = LoopEntry::str2type(localName);
 
-				ignore = IGNORED_SECTIONS.count(localName);
-				agree = localName == sectionName;
-				if (!ignore && agree) {
-					rows.push_back(p);
+				bool ignore = minimal_mode && !MINIMAL_SECTIONS.count(localName);
+				if (localType != LoopEntry::Type::Standard && !ignore) {
+					entries2rows[localType].push_back(p);
 				}
 
-			} while (ignore || agree);
+			} while (localType != LoopEntry::Type::Standard);
 
+			
+			// force section ordering
+			LoopEntry::Type types[]{
+				LoopEntry::Type::Atom, LoopEntry::Type::Hetatm, LoopEntry::Type::Sigatm,
+				LoopEntry::Type::Anisou, LoopEntry::Type::Siguij };
 
+			for (auto type : types) {
+				auto& rows = entries2rows[type];
 
-			for (const auto& def : COLUMN_DEFS) {
-
-				AbstractColumn* col = nullptr;
-				if (!def.isNumeric) {
-					// determine special columns
-					char*& dst = dataBufferPos;
-					col = new StringColumn(def.name, rows, def.width, def.start, dst);
+				// omit empty sections
+				if (rows.empty()) {
+					continue;
 				}
-				else {
-					col = NumericColumn::create(def.name, rows, def.width, def.start);
-					if (col == nullptr) {
+
+				LoopEntry* entry = new LoopEntry(LoopEntry::type2str(type), type);
+
+				const auto& col_defs = COLUMN_DEFS.at(type);
+				for (const auto& def : col_defs) {
+
+					AbstractColumn* col = nullptr;
+					if (!def.isNumeric) {
+						// determine special columns
 						char*& dst = dataBufferPos;
 						col = new StringColumn(def.name, rows, def.width, def.start, dst);
-						// rescue mode - change loop type to standard
-						entry->setType(LoopEntry::Type::Standard);
 					}
+					else {
+						col = NumericColumn::create(def.name, rows, def.width, def.start);
+						if (col == nullptr) {
+							char*& dst = dataBufferPos;
+							col = new StringColumn(def.name, rows, def.width, def.start, dst);
+							// rescue mode - change loop type to standard
+							entry->setType(LoopEntry::Type::Standard);
+						}
+					}
+					entry->addColumn(col);
 				}
-				entry->addColumn(col);
-			}
 
-			addEntry(entry);
+				addEntry(entry);
+			}
 		}
 		else {
 			// process block section
 			char* section = p;
-
+			
 			do {
 				p = find(p, fileEnd, '\n');
 
@@ -91,7 +112,7 @@ void PdbInput::parse() {
 					++p;
 				}
 
-			} while (std::equal(p, p + sectionName.size(), sectionName.c_str()));
+			} while (std::equal(p, p + SECTION_NAME_LEN, section));
 
 			if (need_ommit)
 				continue;
