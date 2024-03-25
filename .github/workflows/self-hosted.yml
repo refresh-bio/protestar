@@ -1,0 +1,55 @@
+name: Self-hosted CI
+
+on:
+  pull_request:
+    branches: [ master ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+
+jobs:
+
+########################################################################################
+  checkout:
+    name: Checkout
+    runs-on: [self-hosted, protestar]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+ ########################################################################################
+  make-tests:
+    name: Make tests
+    needs: checkout
+    runs-on: [self-hosted, protestar]
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++-9, g++-10, g++-11]    
+   
+    steps:
+    - name: make
+      run: | 
+        make -j32 CXX=${{matrix.compiler}}
+        cp ./bin/protestar ./bin/protestar-${{matrix.compiler}}
+        make clean
+
+########################################################################################
+  pdb-tests:
+    needs: make-tests
+    name: PDB tests
+    runs-on: [self-hosted, protestar]
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++-11]
+        subdir: [ligands, nmr, nucleotide] 
+    env: 
+      DATA: ../../../../data
+      OUT: ../../../../out
+
+    steps:
+    - name: lossless (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        ./bin/protestar-${{matrix.compiler}} add --type pdb --indir ${DATA}/${{matrix.subdir}} --out $OUT{}/${{matrix.subdir.psa}} 
