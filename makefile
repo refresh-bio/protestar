@@ -1,4 +1,4 @@
-all: protestar protestar-model-learn example-api pyprotestar
+all: protestar protestar-model-learn example-api
 
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
@@ -69,7 +69,7 @@ STATIC_LFLAGS =
 PY_FLAGS =
 
 ifeq ($(D_OS),MACOS)
-	CC = g++-11
+	CXX = g++-11
 
 	ifeq ($(D_ARCH),ARM64)
 		CPU_FLAGS = -march=armv8.4-a
@@ -80,8 +80,6 @@ ifeq ($(D_OS),MACOS)
 	STATIC_LFLAGS = -static-libgcc -static-libstdc++ -pthread	
 	PY_FLAGS = -Wl,-undefined,dynamic_lookup -fPIC 
 else
-	CC 	= g++
-
 	ifeq ($(D_ARCH),ARM64)
 		CPU_FLAGS = -march=armv8-a
 		STATIC_CFLAGS =
@@ -103,7 +101,7 @@ PYPROTESTAR_CFLAGS = $(PY_FLAGS) -Wall -shared -std=c++17 -O3
 MIMALLOC_OBJ=src/3rd-party/mimalloc/mimalloc.o
 
 $(MIMALLOC_OBJ):
-	$(CC) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I src/3rd-party/mimalloc/include src/3rd-party/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
+	$(CXX) -DMI_MALLOC_OVERRIDE -O3 -DNDEBUG -fPIC -Wall -Wextra -Wno-unknown-pragmas -fvisibility=hidden -ftls-model=initial-exec -fno-builtin-malloc -c -I src/3rd-party/mimalloc/include src/3rd-party/mimalloc/src/static.c -o $(MIMALLOC_OBJ)
 
 
 # default install location (binary placed in the /bin folder)
@@ -187,7 +185,7 @@ $(LIB_ZSTD):
 	cd src/3rd-party/dependencies-zstd/lib; make
 
 $(APP_OBJS) $(LIB_OBJS) $(PARSER_OBJS) $(COMPRESSOR_OBJS) $(CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS) $(MODEL_APP_OBJS) : %.o: %.cpp
-	$(CC) $(CFLAGS) -I $(INC_ZLIB) -I $(INC_ZSTD) -I $(INC_MIMALLOC) -I $(INC_REFRESH_ARCHIVE) -I $(INC_REFRESH_COMPRESSION) -I $(INC_REFRESH_RC) -I $(INC_SAJSON) -I $(INC_VCLCLASS) -c $< -o $@
+	$(CXX) $(CFLAGS) -I $(INC_ZLIB) -I $(INC_ZSTD) -I $(INC_MIMALLOC) -I $(INC_REFRESH_ARCHIVE) -I $(INC_REFRESH_COMPRESSION) -I $(INC_REFRESH_RC) -I $(INC_SAJSON) -I $(INC_VCLCLASS) -c $< -o $@
 
 
 %.o: %.cpp
@@ -195,11 +193,11 @@ $(APP_OBJS) $(LIB_OBJS) $(PARSER_OBJS) $(COMPRESSOR_OBJS) $(CORE_OBJS) $(COMMON_
 
 protestar: $(MIMALLOC_OBJ) $(APP_OBJS) $(PARSER_OBJS) $(COMPRESSOR_OBJS) $(CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS) $(LIB_ZLIB) $(LIB_ZSTD)
 	-mkdir -p $(OUT_BIN_DIR)
-	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB) $(LIB_ZSTD)
+	$(CXX) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB) $(LIB_ZSTD)
 
 protestar-model-learn: $(MIMALLOC_OBJ) $(MODEL_APP_OBJS) $(COMMON_OBJS) $(PARSER_OBJS) $(UTILS_OBJS) $(LIB_ZLIB) 
 	-mkdir -p $(OUT_BIN_DIR)
-	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB)
+	$(CXX) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZLIB)
 
 $(LIB_PSA): $(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJS) $(COMMON_OBJS) $(UTILS_OBJS)
 	-mkdir -p $(OUT_BIN_DIR)
@@ -207,7 +205,7 @@ $(LIB_PSA): $(LIB_OBJS) $(LIB_PARSER_OBJS) $(LIB_COMPRESSOR_OBJS) $(LIB_CORE_OBJ
 	
 example-api: $(EXAMPLE_OBJS) $(LIB_ZSTD) $(LIB_PSA)
 	-mkdir -p $(OUT_BIN_DIR)
-	$(CC) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZSTD) $(LIB_PSA)
+	$(CXX) $(CLINK) -o $(OUT_BIN_DIR)/$@ $^ $(LIB_ZSTD) $(LIB_PSA)
 
 .PHONY:pyprotestar
 pyprotestar: $(PYPROTESTAR_DIR)/pyprotestar.cpp $(PROTESTAR_CXX_DIR)/lib-cxx.o \
@@ -238,5 +236,4 @@ clean:
 	-rm $(OUT_BIN_DIR)/libpsa.a
 	-rm -f $(PYPROTESTAR_DIR)/*.o
 	-rm -f $(PYPROTESTAR_DIR)/*.so
-	cd src/3rd-party/dependencies-zlib; make clean;
 	cd src/3rd-party/dependencies-zstd/lib; make clean;

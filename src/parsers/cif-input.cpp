@@ -246,7 +246,9 @@ void CifInput::parse() {
 				if (p != fileEnd) {
 					++p;
 				}
-			} while (std::equal(p, p + sectionName.size(), sectionName.c_str()));
+//			} while (std::equal(p, p + sectionName.size(), sectionName.c_str()));
+//			} while (p != fileEnd && std::equal(p, p + sectionName.size(), sectionName.c_str()));
+			} while (fileEnd - p >= sectionName.size() && std::equal(p, p + sectionName.size(), sectionName.c_str()));
 
 			copy(section, p, dataBufferPos);
 			size_t size = p - section;

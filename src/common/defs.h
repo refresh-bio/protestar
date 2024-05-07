@@ -7,6 +7,12 @@ using namespace std;
 
 #include "../compressors/matrix.h"
 
+#define OWN_VEC3D
+
+#ifdef OWN_VEC3D
+#include "vec3d.h"
+#endif
+
 template<typename T> struct coords_t
 {
 	T x, y, z;
@@ -22,7 +28,12 @@ template<typename T> struct coords_t
 };
 
 using int_coords_t = coords_t<int64_t>;
+
+#ifdef OWN_VEC3D
+using double_coords_t = Vec3Dd;
+#else
 using double_coords_t = coords_t<double>;
+#endif
 
 const unsigned int MATRIX_FRAME_SIZE = 3;
 

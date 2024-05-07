@@ -11,7 +11,6 @@
 #include "model_compress.h"
 #include "serializer.h"
 #include <zstd.h>
-#include <vectorclass.h>
 
 using namespace std;
 using namespace refresh;

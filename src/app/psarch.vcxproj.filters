@@ -247,5 +247,8 @@
     <ClInclude Include="..\parsers\pdb-output.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\vec3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

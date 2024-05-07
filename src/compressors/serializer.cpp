@@ -431,6 +431,10 @@ void Serializer::decompress_zstd(ZSTD_DCtx* zstd_dctx, vector<char> *zstd_dict)
 
 	swap(tmp, data);
 
+	FILE* fd = fopen("bin.bin", "wb");
+	fwrite(data.data(), 1, data.size(), fd);
+	fclose(fd);
+
 	restart();
 }
 
@@ -523,26 +527,26 @@ void Serializer::decompress_zstd_rc(ZSTD_DCtx* zstd_dctx, vector<char>* zstd_dic
 
 			if (nb == 1)
 			{
-				val = rcd->get_cumulative_freq(256);
+				val = (uint32_t) rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 			}
 			else if (nb == 2)
 			{
-				val = rcd->get_cumulative_freq(256);
+				val = (uint32_t)rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 				val <<= 8;
-				val += rcd->get_cumulative_freq(256);
+				val += (uint32_t)rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 			}
 			else
 			{
-				val = rcd->get_cumulative_freq(256);
+				val = (uint32_t)rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 				val <<= 8;
-				val += rcd->get_cumulative_freq(256);
+				val += (uint32_t)rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 				val <<= 8;
-				val += rcd->get_cumulative_freq(256);
+				val += (uint32_t)rcd->get_cumulative_freq(256);
 				rcd->update_frequency(1, val, 256);
 			}
 		}

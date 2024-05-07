@@ -45,6 +45,8 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
+    <EnableASAN>false</EnableASAN>
+    <EnableFuzzer>true</EnableFuzzer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -190,6 +192,7 @@
     <ClInclude Include="..\common\init_model.hpp" />
     <ClInclude Include="..\common\model.h" />
     <ClInclude Include="..\common\tetrahedron.h" />
+    <ClInclude Include="..\common\vec3d.h" />
     <ClInclude Include="..\compressors\cif-compressor.h" />
     <ClInclude Include="..\compressors\cif-decompressor.h" />
     <ClInclude Include="..\compressors\conf-compressor.h" />

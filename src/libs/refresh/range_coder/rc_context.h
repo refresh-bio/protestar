@@ -1,9 +1,12 @@
 #ifndef _RC_CONTEXT_H
 #define _RC_CONTEXT_H
 
+#ifdef _WIN32
 #include <mmintrin.h>
-#include <cstdint>
 #include <xmmintrin.h>
+#endif
+
+#include <cstdint>
 #include <iostream> 
 #include <cstddef>
 #include <array>

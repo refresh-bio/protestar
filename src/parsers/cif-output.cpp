@@ -12,7 +12,7 @@ using namespace std;
 size_t CifOutput::store()
 {
 	char* p = fileBuffer.data();
-	LoopEntry::Type prevType = LoopEntry::Type::Standard;
+	const Entry* prevEntry = nullptr;
 
 	for (const Entry* e : entries) {
 		if (!e->isLoop) {
@@ -22,13 +22,16 @@ size_t CifOutput::store()
 			replace_copy(be->data, be->data + be->size, p, StringColumn::MULTILINE_VALUE_MARKER, ';');
 
 			p += be->size;
+			prevEntry = be;
 		}
 		else {
 			const LoopEntry* le = dynamic_cast<const LoopEntry*>(e);
 			//			realloc_filebuf_if_necessary(p);
 
-						// store loop header when current or previous type is standard 
-			if (le->getType() == LoopEntry::Type::Standard || prevType == LoopEntry::Type::Standard) {
+			// store loop header when:
+			// - current loop is not an atom_site
+			// - current loop is atom_site and previous section was not an atom_site
+			if (le->name != ENTRY_ATOM_SITE  || (prevEntry && prevEntry->name != ENTRY_ATOM_SITE)) {
 
 				p += Conversions::String2PChar("loop_\n", p);
 
@@ -64,7 +67,7 @@ size_t CifOutput::store()
 				*p++ = '\n';
 			}
 
-			prevType = le->getType();
+			prevEntry = le;
 		}
 	}
 

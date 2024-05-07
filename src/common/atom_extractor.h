@@ -214,7 +214,7 @@ struct aa_desc_t
 	aa_desc_t(aa_desc_t&& rhs) = default;
 	aa_desc_t(const aa_desc_t& rhs) = default;
 
-	aa_desc_t& operator=(aa_desc_t&& rhs)
+	aa_desc_t& operator=(aa_desc_t&& rhs) noexcept
 	{
 		type = rhs.type;
 		seq_id = rhs.seq_id;

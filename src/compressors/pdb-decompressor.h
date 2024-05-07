@@ -12,6 +12,7 @@ public:
 		init_type_specific_dict(v_atom, v_chem, v_col_names, v_common_words);
 
 		zstd_dict = type_specific_dict;
+
 		zstd_dict_ext = zstd_dict;
 	}
 

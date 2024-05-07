@@ -32,8 +32,15 @@ int64_t StructDecompressor::rc_decode_uint(uint32_t ctx, rc_context_vec_emb<mode
         uint32_t b1 = rc_find_context(dict_suffix, ctx * 16 + 13, &tpl_suffix_dec.back())->decode();
         uint32_t b2 = rc_find_context(dict_suffix, ctx * 16 + 14, &tpl_suffix_dec.back())->decode();
         uint32_t b3 = rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_dec.back())->decode();
+        uint32_t b4 = 0;
 
-        val = b3 * 65536 + b2 * 256 + b1;
+        if (b3 == 255)
+        {
+            b3 = rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_dec.back())->decode();
+            b4 = rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_dec.back())->decode();
+        }
+
+        val = (b4 << 24) + (b3 << 16) + (b2 << 8) + b1;
 
         val += 1 << (prefix_max_bits - 1);
     }
@@ -44,7 +51,7 @@ int64_t StructDecompressor::rc_decode_uint(uint32_t ctx, rc_context_vec_emb<mode
 // *****************************************************************
 int64_t StructDecompressor::rc_decode_int(uint32_t ctx, rc_context_vec_emb<model_prefix_t>& dict_prefix, rc_context_vec_emb<model_negative_t>& dict_negative, rc_context_vec<model_suffix_t>& dict_suffix)
 {
-    int val = rc_decode_uint(ctx, dict_prefix, dict_suffix);
+    int64_t val = rc_decode_uint(ctx, dict_prefix, dict_suffix);
 
     if (val != 0)
     {
@@ -122,17 +129,17 @@ void StructDecompressor::decompress(StructFileOutput* output, const vector<uint8
     aa_sequences_iter = aa_sequences.begin();
 
     extend_zstd_dict(struct_name);
-
     ser_plain.decompress_zstd(zstd_dctx, &zstd_dict_ext);
 
-    Serializer ser_buffer;
+//    Serializer ser_buffer;
     ser_plain.load_serializer(ser_strings);
     ser_plain.load_serializer(ser_text);
 
-    output->reset(ser_buffer.size(), raw_size);
+//    output->reset(ser_buffer.size(), raw_size);
+    output->reset(raw_size, raw_size);
 
     char* str_data = output->getDataBuffer();
-    ser_buffer.load_bytes(str_data, ser_buffer.size());
+//    ser_buffer.load_bytes(str_data, ser_buffer.size());
 
     ctx_entry_type = 0;
 
@@ -179,6 +186,7 @@ BlockEntry* StructDecompressor::decompress_block_entry(char*& str_data)
 
     // make a new entry
     ser_text.load_bytes(str_data, entry_size + 1);
+
     BlockEntry* newEntry = new BlockEntry("", entry_size, str_data);
 
     return newEntry;
@@ -204,11 +212,11 @@ LoopEntry* StructDecompressor::decompress_loop_generic(char*& str_data)
         string col_name = ser_strings.load_str();
 
         if (col_type == col_type_t::numeric_general || col_type == col_type_t::numeric_same_values || col_type == col_type_t::numeric_same_diff)
-            newEntry->addColumn(decompress_numeric_column(col_type, col_name, no_rows, v_tmp));
+            newEntry->addColumn(decompress_numeric_column(col_type, col_name, (int) no_rows, v_tmp));
         else if (col_type == col_type_t::cart_as_numeric)
-            newEntry->addColumn(decompress_cart_column_as_numeric(col_type, col_name, no_rows, v_tmp));
+            newEntry->addColumn(decompress_cart_column_as_numeric(col_type, col_name, (int) no_rows, v_tmp));
         else if (col_type == col_type_t::text)
-            newEntry->addColumn(decompress_string_column(col_name, no_rows, str_data));
+            newEntry->addColumn(decompress_string_column(col_name, (int) no_rows, str_data));
         else
             assert(0);           // Cannot be here
     }
@@ -219,15 +227,15 @@ LoopEntry* StructDecompressor::decompress_loop_generic(char*& str_data)
 // *****************************************************************
 AbstractColumn* StructDecompressor::decompress_string_column_special(const string& col_name, int no_rows, char*& str_data)
 {
-    int width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
+    auto width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
-    return new StringColumn(col_name, (int)no_rows, width, str_data);
+    return new StringColumn(col_name, (int)no_rows, (int) width, str_data);
 }
 
 // *****************************************************************
 AbstractColumn* StructDecompressor::decompress_string_column(const string& col_name, int no_rows, char*& str_data)
 {
-    int width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
+    auto width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
     int tot_rep = 0;
 
@@ -235,8 +243,8 @@ AbstractColumn* StructDecompressor::decompress_string_column(const string& col_n
 
     while (tot_rep < no_rows)
     {
-        int no_reps = rc_decode_uint((uint32_t)rc_int_class_t::string_rep, dict_main_prefix, dict_main_suffix) + 1;
-        tot_rep += no_reps;
+        auto no_reps = rc_decode_uint((uint32_t)rc_int_class_t::string_rep, dict_main_prefix, dict_main_suffix) + 1;
+        tot_rep += (int) no_reps;
 
         char* p = ser_text.load_cstr();
 
@@ -248,26 +256,26 @@ AbstractColumn* StructDecompressor::decompress_string_column(const string& col_n
         }
     }
 
-    return new StringColumn(col_name, (int)no_rows, width, str_data);
+    return new StringColumn(col_name, (int)no_rows, (int) width, str_data);
 }
 
 // *****************************************************************
 AbstractColumn* StructDecompressor::decompress_numeric_column(col_type_t col_type, const string& col_name, int no_rows, vector<int>& v_tmp)
 {
-    uint8_t decimals = rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
-    int8_t width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
+    uint8_t decimals = (uint8_t) rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
+    int8_t width = (int8_t) rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
     v_tmp.clear();
 
     if (col_type == col_type_t::numeric_same_values)
     {
-        int x = rc_decode_int((uint32_t)rc_int_class_t::numeric_val, dict_main_prefix, dict_main_negative, dict_main_suffix);
+        int x = (int) rc_decode_int((uint32_t)rc_int_class_t::numeric_val, dict_main_prefix, dict_main_negative, dict_main_suffix);
         v_tmp.resize(no_rows, x);
     }
     else if (col_type == col_type_t::numeric_same_diff)
     {
-        int x = rc_decode_int((uint32_t)rc_int_class_t::numeric_val, dict_main_prefix, dict_main_negative, dict_main_suffix);
-        int diff = rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
+        int x = (int) rc_decode_int((uint32_t)rc_int_class_t::numeric_val, dict_main_prefix, dict_main_negative, dict_main_suffix);
+        int diff = (int) rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
         v_tmp.resize(no_rows);
 
@@ -285,7 +293,7 @@ AbstractColumn* StructDecompressor::decompress_numeric_column(col_type_t col_typ
 
         for (int i = 0; i < no_rows; ++i)
         {
-            int x = rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
+            int x = (int) rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
             v_tmp[i] = x + p_val;
             p_val = x + p_val;
@@ -298,10 +306,10 @@ AbstractColumn* StructDecompressor::decompress_numeric_column(col_type_t col_typ
 // *****************************************************************
 AbstractColumn* StructDecompressor::decompress_cart_column_as_numeric(col_type_t col_type, const string& col_name, int no_rows, vector<int>& v_tmp)
 {
-    uint8_t decimals = rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
-    int8_t width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
+    uint8_t decimals = (uint8_t) rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
+    int8_t width = (int8_t) rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
-    cart_precision = rcd->get_cumulative_freq(7);
+    cart_precision = (int) rcd->get_cumulative_freq(7);
     rcd->update_frequency(1, cart_precision, 7);
 
     res_backbone_uA_single_axis = dec_resolution(rcd);
@@ -316,7 +324,7 @@ AbstractColumn* StructDecompressor::decompress_cart_column_as_numeric(col_type_t
 
     for (int i = 0; i < no_rows; ++i)
     {
-        int x = rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
+        int x = (int) rc_decode_int((uint32_t)rc_int_class_t::numeric_diff, dict_main_prefix, dict_main_negative, dict_main_suffix);
 
         v_tmp[i] = (x + p_val) * resolution / cart_working_multiplier;
         p_val = x + p_val;
@@ -339,14 +347,14 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
 {
     string loop_name = ser_strings.load_str();
 
-    int no_cols = rc_decode_uint((uint32_t)rc_int_class_t::no_columns, dict_main_prefix, dict_main_suffix);
-    int no_rows = rc_decode_uint((uint32_t)rc_int_class_t::no_rows, dict_main_prefix, dict_main_suffix);
+    int no_cols = (int) rc_decode_uint((uint32_t)rc_int_class_t::no_columns, dict_main_prefix, dict_main_suffix);
+    int no_rows = (int) rc_decode_uint((uint32_t)rc_int_class_t::no_rows, dict_main_prefix, dict_main_suffix);
 
     vector<chain_desc_t> chains;
 
     while (true)
     {
-        int chain_len = rc_decode_uint((uint32_t)rc_int_class_t::aa_sequence_len, dict_main_prefix, dict_main_suffix);
+        int chain_len = (int) rc_decode_uint((uint32_t)rc_int_class_t::aa_sequence_len, dict_main_prefix, dict_main_suffix);
         if (chain_len == 0)
             break;
 
@@ -377,7 +385,7 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
 
             if (is_constant_bf)
             {
-                int bf_delta = rc_decode_int((uint32_t)rc_int_class_t::bf_delta, dict_main_prefix, dict_main_negative, dict_main_suffix);
+                int bf_delta = (int) rc_decode_int((uint32_t)rc_int_class_t::bf_delta, dict_main_prefix, dict_main_negative, dict_main_suffix);
                 bf_curr = bf_prev + bf_delta;
                 bf_prev = bf_curr;
             }
@@ -396,7 +404,7 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
 
                 if (!is_constant_bf)
                 {
-                    int bf_delta = rc_decode_int((uint32_t)rc_int_class_t::bf_delta, dict_main_prefix, dict_main_negative, dict_main_suffix);
+                    int bf_delta = (int) rc_decode_int((uint32_t)rc_int_class_t::bf_delta, dict_main_prefix, dict_main_negative, dict_main_suffix);
                     bf_curr = bf_prev + bf_delta;
                     bf_prev = bf_curr;
                 }
@@ -406,7 +414,7 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
         }
     }
 
-    int cart_precision = rcd->get_cumulative_freq(7);
+    int cart_precision = (int) rcd->get_cumulative_freq(7);
     rcd->update_frequency(1, cart_precision, 7);
 
     cart_working_multiplier = pow10<int>(cart_working_precision - cart_precision);
@@ -418,7 +426,7 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
 
     for (int i = 0; i < no_cols; ++i)
     {
-        int col_id = rcd->get_cumulative_freq(chain_desc_col.size() + 1);
+        int col_id = (int) rcd->get_cumulative_freq(chain_desc_col.size() + 1);
         rcd->update_frequency(1, (int)col_id, chain_desc_col.size() + 1);
 
         if (col_id == (int)chain_desc_col.size())
@@ -480,8 +488,8 @@ LoopEntry* StructDecompressor::decompress_loop_atom(char*& str_data)
                 else
                     assert(0);
 
-                uint8_t decimals = rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
-                int8_t width = rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
+                uint8_t decimals = (uint8_t) rc_decode_uint((uint32_t)rc_int_class_t::col_decimals, dict_main_prefix, dict_main_suffix);
+                int8_t width = (int8_t) rc_decode_int((uint32_t)rc_int_class_t::col_width, dict_main_prefix, dict_main_negative, dict_main_suffix);
                 newEntry->addColumn(new NumericColumn(col_name, decimals, width, std::move(v_tmp)));
             }
             else
@@ -694,12 +702,12 @@ void StructDecompressor::prepare_rc_tpl()
             tpl_centroid_id_dec.push_back(model_centroid_id_t(rcd, i, nullptr, false));
 
     if (tpl_centroid_id_init_dec.empty())
-        for (int i = 0; i <= cart_decomp.max_packed_atom_ctx; ++i)
+        for (int i = 0; i <= (int) cart_decomp.max_packed_atom_ctx; ++i)
         {
             auto cc = cart_decomp.get_centroid_counts(i);
 
             if (cc.first)
-                tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, cc.second, cc.first, false));
+                tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, (uint32_t) cc.second, cc.first, false));
             else
                 tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, 2, nullptr, false));     /// will not be used
         }
@@ -710,12 +718,12 @@ void StructDecompressor::remake_init_tpls()
 {
     tpl_centroid_id_init_dec.clear();
 
-    for (int i = 0; i <= cart_decomp.max_packed_atom_ctx; ++i)
+    for (int i = 0; i <= (int) cart_decomp.max_packed_atom_ctx; ++i)
     {
         auto cc = cart_decomp.get_centroid_counts(i);
 
         if (cc.first)
-            tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, cc.second, cc.first, false));
+            tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, (uint32_t) cc.second, cc.first, false));
         else
             tpl_centroid_id_init_dec.push_back(model_centroid_id_t(rcd, 2, nullptr, false));     // will not be used
     }

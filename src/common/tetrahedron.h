@@ -1,20 +1,12 @@
 #pragma once
 
 #include <cmath>
-#include <vectorclass.h>
-#include <vector3d/vector3d.h>
-
-#include <utility>
 
 #include "../common/defs.h"
 
-// *****************************************************************
-static inline Vec3Dd perp_vector(Vec3Dd const a, Vec3Dd const b)
-{
-	auto dp = dot_product(a, b);
+#include "vec3d.h"
 
-	return a - b * dp;
-}
+#include <utility>
 
 // *****************************************************************
 struct tetrahedron_t
@@ -31,31 +23,11 @@ private:
 	double_coords_t b1, b2, b3, q, q_alt;
 	double dist_b12, dist_b13, dist_b23, dist_q1, dist_q2, dist_q3;
 
-	double calc_dist(const double_coords_t a, const double_coords_t b)
-	{
-		Vec3Dd va, vb;
-
-		va.load((const double*) & a);
-		vb.load((const double*) & b);
-
-		return vector_length(va - vb);
-
-//		return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y) + (a.z - b.z) * (a.z - b.z));
-	}
-
 	void calc_b_dist()
 	{
-		Vec3Dd p1{ b1.x, b1.y, b1.z };
-		Vec3Dd p2{ b2.x, b2.y, b2.z };
-		Vec3Dd p3{ b3.x, b3.y, b3.z };
-
-		Vec3Dd p12 = p1 - p2;
-		Vec3Dd p13 = p1 - p3;
-		Vec3Dd p23 = p2 - p3;
-
-		dist_b12 = vector_length(p12);
-		dist_b13 = vector_length(p13);
-		dist_b23 = vector_length(p23);
+		dist_b12 = vector_length(b1 - b2);
+		dist_b13 = vector_length(b1 - b3);
+		dist_b23 = vector_length(b2 - b3);
 
 		known_b_distances = true;
 	}
@@ -65,9 +37,9 @@ private:
 		if (!known_b_coords)
 			calc_b_coords();
 
-		dist_q1 = calc_dist(q, b1);
-		dist_q2 = calc_dist(q, b2);
-		dist_q3 = calc_dist(q, b3);
+		dist_q1 = vector_length(q - b1);
+		dist_q2 = vector_length(q - b2);
+		dist_q3 = vector_length(q - b3);
 
 		known_q_distances = true;
 	}
@@ -93,35 +65,26 @@ private:
 		if (!known_b_coords)
 			calc_b_coords();
 
-		Vec3Dd p1{ b1.x, b1.y, b1.z };
-		Vec3Dd p2{ b2.x, b2.y, b2.z };
-		Vec3Dd p3{ b3.x, b3.y, b3.z };
-
-		Vec3Dd p12 = p1 - p2;
-		Vec3Dd p13 = p1 - p3;
-		Vec3Dd p23 = p2 - p3;
+		Vec3Dd b12 = b1 - b2;
+		Vec3Dd b13 = b1 - b3;
+		Vec3Dd b23 = b2 - b3;
 
 		if (!known_b_distances)
 		{
-			dist_b12 = vector_length(p12);
-			dist_b13 = vector_length(p13);
-			dist_b23 = vector_length(p23);
+			dist_b12 = vector_length(b12);
+			dist_b13 = vector_length(b13);
+			dist_b23 = vector_length(b23);
 			known_b_distances = true;
 		}
 //			calc_b_dist();
 
-//		auto u_axis = normalize_vector(p1 - p2);
-		auto u_axis = normalize_vector(p12);
-//		auto v_axis = normalize_vector(perp_vector(p3 - p1, u_axis));
-		auto v_axis = normalize_vector(perp_vector(-p13, u_axis));
+		auto u_axis = normalize_vector(b12);
+		auto v_axis = normalize_vector(perp_vector(-b13, u_axis));
 		auto w_axis = cross_product(u_axis, v_axis);
 
-//		auto u2 = dot_product(p2 - p1, u_axis);
-		auto u2 = dot_product(-p12, u_axis);
-		//auto u3 = dot_product(p3 - p1, u_axis);
-		auto u3 = dot_product(-p13, u_axis);
-//		auto v3 = dot_product(p3 - p1, v_axis);
-		auto v3 = dot_product(-p13, v_axis);
+		auto u2 = dot_product(-b12, u_axis);
+		auto u3 = dot_product(-b13, u_axis);
+		auto v3 = dot_product(-b13, v_axis);
 		
 		auto u = (dist_q1 * dist_q1 - dist_q2 * dist_q2 + u2 * u2) / (2 * u2);
 		auto v = (dist_q1 * dist_q1 - dist_q3 * dist_q3 + u3 * u3 + v3 * v3 - 2 * u * u3) / (2 * v3);
@@ -130,17 +93,9 @@ private:
 
 		auto wx = w * w_axis;
 
-		auto vq1 = p1 + u * u_axis + v * v_axis;
-		auto vq2 = vq1 - wx;
-		vq1 += wx;
-
-		q.x = vq1.get_x();
-		q.y = vq1.get_y();
-		q.z = vq1.get_z();
-
-		q_alt.x = vq2.get_x();
-		q_alt.y = vq2.get_y();
-		q_alt.z = vq2.get_z();
+		q = b1 + u * u_axis + v * v_axis;
+		q_alt = q - wx;
+		q += wx;
 
 		known_q_coords = true;
 	}
@@ -158,7 +113,8 @@ public:
 		type(type_t::points),
 		known_b_coords(true),
 		known_q_coords(true),
-		b1(_b1), b2(_b2), b3(_b3), q(_q), q_alt{}
+		b1(_b1), b2(_b2), b3(_b3), q(_q), q_alt{},
+		dist_b12{}, dist_b13{}, dist_b23{}, dist_q1{}, dist_q2{}, dist_q3{}
 	{}
 
 	tetrahedron_t(const double_coords_t& _b1, const double_coords_t& _b2, const double_coords_t& _b3, const double _dist_q1, const double _dist_q2, const double _dist_q3) :

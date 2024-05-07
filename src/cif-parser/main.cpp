@@ -189,7 +189,12 @@ int main() {
         "cif/AF-A0A1B0GV68-F1-model_v3.cif",
         "cif/AF-A0A1B0GVY1-F1-model_v3.cif",
         "cif/AF-A0A023HHL0-F1-model_v3.cif",
-        "cif/AF-A0A023I7H2-F1-model_v3.cif" 
+        "cif/AF-A0A023I7H2-F1-model_v3.cif",
+        "ligands/1uw6.cif",
+        "ligands/3u8m.cif",
+        "ligands/3zdg.cif",
+        "ligands/4um3.cif",
+        "ligands/4zru.cif"
     };
 
     std::vector<string> pdb_files{
@@ -200,30 +205,24 @@ int main() {
          "pdb/AF-A0A024R1R8-F1-model_v4.pdb",
          "pdb/8g8e.pdb",
          "pdb/MGYP000911143359.pdb",
+
+         "ligands/1uw6.pdb",
+         "ligands/1z7a.pdb",
+         "ligands/3u8m.pdb",
+         "ligands/3zdg.pdb",
+         "ligands/4um3.pdb",
+         "ligands/4zru.pdb",
+         "ligands/5wu7.pdb",
+         "ligands/6r5r.pdb",
       
     };
 
-    std::vector<string> cif_ligands {
-   //     "ligands/1uw6.cif",
-        "ligands/3u8m.cif",
-        "ligands/3zdg.cif",
-        "ligands/4um3.cif",
-        "ligands/4zru.cif"
-    };
-
-    std::vector<string> pdb_ligands {
-    //    "ligands/1uw6.pdb",
-    //    "ligands/3u8m.pdb",
-        "ligands/3zdg.pdb",
-    //    "ligands/4um3.pdb",
-    //    "ligands/4zru.pdb"
-    };
 
     try {
         cout << "CIF" << endl;
-       //test_cif(cif_ligands);
+       test_cif(cif_files);
         cout << endl << "PDB" << endl;
-        test_pdb(pdb_ligands);
+        //test_pdb(pdb_files);
         
     }
     catch (std::runtime_error& err) {

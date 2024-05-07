@@ -51,6 +51,10 @@ ProteStAr should be downloaded from [https://github.com/refresh-bio/protestar](h
 Support for MacOS and well as ARM-based CPUs will be added soon.
 
 ## Version history
+* 1.1.0 (8 May 2024)
+  * Support of ANISOU, SIGATM, and SIGUIJ sections in PDB files.
+  * Some fixes in the PDB and CIF output formatting.
+  * Support of MacOS (M1 and x64 architectures).
 * 1.0.0 (8 December 2023)
   * *pyprotestar* Python package added,
   * fixed incorrect alignment of ATOM column in some PDB files. 
@@ -124,7 +128,7 @@ THe C++ API is provided in `src/lib-cxx/protestar-api.h` file.
 You can also take a look at `src/example_api` to see the API in use.
 
 ### Python package
-ProteStAr archives can be accessed through *pyprotestar* Python package. The package is built automatically together with ProteStAr binaries but can be also compiled separately:
+ProteStAr archives can be accessed through *pyprotestar* Python package. The package has to be compiled separately:
 ```
 make -j pyprotestar
 ```
@@ -151,8 +155,7 @@ The data in apsd-data were selected from [AlphaFold Protein Structure Database](
 * The subset of ESM Atlas used in the experiments can be downloaded from [ESM subset](https://polslpl-my.sharepoint.com/:u:/g/personal/sdeorowicz_polsl_pl/EZlvCxYITEhNuXJeorf5vggBQlwCuBiEu6vzoUmEutAtoA?e=fYI6an) (1.6 GB file).
 
 ## Known issues and limitations
-* After the decompression of CIF and PDB files, the formating of the tables may be a bit different than the original one. The contents is, however, the same. This will be fixed in one of the future releases.
-* In atom tables (CIF, PDB) we support only ATOM and HETATM sections. Thus other lines, like ANISOU, SIGUIJ will be skipper. This will be fixed in one on the future releases.
+* After decompression of CIF files, the formating of tables may be a bit different than the original one. The contents is, however, the same.
 
 ## Citing
 

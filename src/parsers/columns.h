@@ -33,7 +33,7 @@ protected:
 public:
     const std::vector<T>& getValues() const { return values; }
 
-    const T& getValueAtRow(int ir) const { return (ir < values.size()) ? values[ir] : std::numeric_limits<T>::max(); }
+    T getValueAtRow(int ir) const { return (ir < values.size()) ? values[ir] : std::numeric_limits<T>::max(); }
 
     Column(bool isNumeric, const std::string& name, int numRows, int width) 
         : AbstractColumn(isNumeric, name, numRows, width), values(numRows) {}

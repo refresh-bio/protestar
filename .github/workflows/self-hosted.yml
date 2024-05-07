@@ -12,44 +12,184 @@ jobs:
 ########################################################################################
   checkout:
     name: Checkout
-    runs-on: [self-hosted, protestar]
+    strategy:
+      matrix:
+        machine: [xeon, mac-i7, mac-m1]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
 
- ########################################################################################
-  make-tests:
-    name: Make tests
+########################################################################################
+  make:
+    name: Make
     needs: checkout
-    runs-on: [self-hosted, protestar]
     strategy:
       fail-fast: false
       matrix:
-        compiler: [g++-9, g++-10, g++-11]    
+        machine: [xeon, mac-i7, mac-m1]
+        compiler: [g++-11]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']   
    
     steps:
+    - name: clean
+      run: |
+        make clean
     - name: make
       run: | 
         make -j32 CXX=${{matrix.compiler}}
         cp ./bin/protestar ./bin/protestar-${{matrix.compiler}}
-        make clean
 
 ########################################################################################
-  pdb-tests:
-    needs: make-tests
-    name: PDB tests
-    runs-on: [self-hosted, protestar]
+  alpha-fold:
+    needs: make
+    name: Alpha-fold
     strategy:
       fail-fast: false
       matrix:
+        machine: [xeon, mac-i7, mac-m1]
         compiler: [g++-11]
-        subdir: [ligands, nmr, nucleotide] 
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']
+
+    steps:
+    - name: add PDB (${{matrix.compiler}})
+      run: |
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pdb --indir ./apsd-data/pdb/ --out test.psa
+
+    - name: add CIF (${{matrix.compiler}})
+      run: |
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type cif --indir ./apsd-data/cif/ --in test.psa --out test.psa
+
+    - name: add PAE (${{matrix.compiler}})
+      run: |
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pae --indir ./apsd-data/pae/ --in test.psa --out test.psa
+
+    - name: extract PDB (${{matrix.compiler}})
+      run: |
+        mkdir -p ./pdb-dir
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in test.psa --outdir ./pdb-dir/ --type pdb --all
+        python3 ./data/cmp.py ./pdb-dir ./apsd-data/pdb/  
+        rm -r ./pdb-dir
+
+    - name: extract CIF (${{matrix.compiler}})
+      run: |
+        mkdir -p ./cif-dir
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in test.psa --outdir ./cif-dir/ --type cif --all
+        rm -r ./cif-dir
+
+    - name: extract PAE (${{matrix.compiler}})
+      run: |
+        mkdir ./pae-dir
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in test.psa --outdir ./pae-dir/ --type pae --all 
+        rm -r ./pae-dir
+
+########################################################################################
+  pdb-lossless:
+    needs: alpha-fold
+    name: PDB lossless
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [xeon, mac-i7, mac-m1]
+        compiler: [g++-11]
+        subdir: [ligands, nmr, nucleotide]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']
     env: 
-      DATA: ../../../../data
-      OUT: ../../../../out
+      DATA: ./data
+      OUT: ./out
 
     steps:
     - name: lossless (${{matrix.compiler}}, ${{matrix.subdir}})
       run: |
-        ./bin/protestar-${{matrix.compiler}} add --type pdb --indir ${DATA}/${{matrix.subdir}} --out $OUT{}/${{matrix.subdir.psa}} 
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-lossless
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}.psa
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-lossless --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-lossless ${DATA}/${{matrix.subdir}} 
+        rm -r ${OUT}/${{matrix.subdir}}/pdb-lossless
+
+########################################################################################
+  pdb-lossy:
+    needs: alpha-fold
+    name: PDB minimal and lossy
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [xeon, mac-i7, mac-m1]
+        compiler: [g++-11]
+        subdir: [ligands]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']
+    env: 
+      DATA: ./data
+      OUT: ./out
+
+    steps:
+    - name: minimal (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-minimal
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-minimal.psa --minimal
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}-minimal.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-minimal --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-minimal ${DATA}/${{matrix.subdir}}/minimal
+        rm -r ${OUT}/${{matrix.subdir}}/pdb-minimal
+    - name: lossy (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-lossy
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-lossy.psa --lossy --max-error-bb 100 --max-error-sc 100
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}-lossy.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-lossy --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-lossy ${DATA}/${{matrix.subdir}}/lossy_100_100
+        rm -r ${OUT}/${{matrix.subdir}}/pdb-lossy
+        
+########################################################################################
+  cif-lossy:
+    needs: alpha-fold
+    name: CIF 
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [xeon, mac-i7, mac-m1]
+        compiler: [g++-11]
+        subdir: [ligands]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']
+    env: 
+      DATA: ./data
+      OUT: ./out
+
+    steps:
+    - name: lossless (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-lossless
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type cif --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}.psa
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}.psa --outdir ${OUT}/${{matrix.subdir}}/cif-lossless --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-lossless ${DATA}/${{matrix.subdir}}/cif-lossless 
+        rm -r ${OUT}/${{matrix.subdir}}/cif-lossless
+    - name: minimal (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-minimal
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type cif --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-minimal.psa --minimal
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}-minimal.psa --outdir ${OUT}/${{matrix.subdir}}/cif-minimal --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-minimal ${DATA}/${{matrix.subdir}}/minimal
+        rm -r ${OUT}/${{matrix.subdir}}/cif-minimal
+    - name: lossy (${{matrix.compiler}}, ${{matrix.subdir}})
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-lossy
+        ./bin/protestar-${{matrix.compiler}} add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-lossy.psa --lossy --max-error-bb 100 --max-error-sc 100
+        ./bin/protestar-${{matrix.compiler}} get -v 3 --in ${OUT}/${{matrix.subdir}}-lossy.psa --outdir ${OUT}/${{matrix.subdir}}/cif-lossy --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-lossy ${DATA}/${{matrix.subdir}}/lossy_100_100
+        rm -r ${OUT}/${{matrix.subdir}}/cif-lossy
+
+
+########################################################################################
+  pyprotestar:
+    name: pyprotestar tests
+    needs: checkout
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [xeon, mac-i7]
+        compiler: [g++-11]
+    runs-on: [self-hosted, protestar, '${{ matrix.machine }}']   
+   
+    steps:
+    - name: make
+      run: |
+       make -j32 pyprotestar       

@@ -12,7 +12,6 @@ size_t PdbOutput::store() {
 	//	char* p0 = p;
 
 	for (int ie = 0; ie < entries.size(); ) {
-		
 		if (!entries[ie]->isLoop) {
 			const BlockEntry* be = dynamic_cast<const BlockEntry*>(entries[ie]);
 			//			realloc_filebuf_if_necessary(p, be->size);
@@ -61,7 +60,7 @@ size_t PdbOutput::store() {
 					for (int i = 0; i < rowIndices.size(); ++i) {
 						int ir = rowIndices[i];
 						int val = atom_cols[i]->getValueAtRow(ir); // return MAX_INT if out of range
-						
+
 						if (val < mini.second) {
 							mini.first = i;
 							mini.second = val;
@@ -140,8 +139,8 @@ void PdbOutput::store_element(const AbstractColumn* column, int ir, char*& p) {
 
 		if (len < 4) {
 			// one-symbol chemical elements - insert space to output
-			if (*tmp == 'N' || *tmp == 'C' || *tmp == 'O' || *tmp == 'S' || *tmp == 'P' || *tmp == 'I' || *tmp == 'H' ||
-				(tmp[0] == 'F' && tmp[1] != 'E')) { // not an iron
+			if (*tmp == 'N' || *tmp == 'C' || *tmp == 'O' || (tmp[0] == 'S' && tmp[1] != 'E') || *tmp == 'P' || *tmp == 'I' || *tmp == 'H' ||
+				(tmp[0] == 'F' && tmp[1] != 'E')) { // not an iron 
 				*p = ' ';
 				++p;
 			}

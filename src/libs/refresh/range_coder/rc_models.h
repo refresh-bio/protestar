@@ -346,6 +346,8 @@ public:
 	freq_model_simple_fixed() : total(0)
 #endif
 	{
+		for (unsigned i = 0; i < N_SYMBOLS; ++i)
+			stats[i] = 0;
 	};
 
 	~freq_model_simple_fixed()

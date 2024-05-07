@@ -1,6 +1,7 @@
 #include "atom_extractor.h"
 #include "../core/utils.h"
 #include "../parsers/input-base.h"
+#include <limits>
 
 // *****************************************************************
 int64_t coords_distance2(const int_coords_t& a, const int_coords_t& b)
@@ -63,7 +64,7 @@ bool Protein::parse_chains(const LoopEntry *entry)
     cart_precision = dynamic_cast<const NumericColumn*>(col_Cartn_x)->numDecimals;
 
     string asym_id = "";
-    int seq_id = -1;
+    int seq_id = numeric_limits<int>::min();
     aa_t curr_aa = aa_t::unknown;
 
     for (size_t i = 0; i < group_PDB.size(); ++i)
@@ -72,7 +73,7 @@ bool Protein::parse_chains(const LoopEntry *entry)
         {
             asym_id = auth_asym_id[i];
             v_chains.emplace_back(asym_id.front());
-            seq_id = -1;
+            seq_id = numeric_limits<int>::min();
 
             // Count no. of AA in chain
             size_t j;

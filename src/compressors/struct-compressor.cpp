@@ -135,11 +135,20 @@ void StructCompressor::rc_encode_uint(uint32_t ctx, rc_context_vec_emb<model_pre
 
         int b1 = (int)(val & 0xff);
         int b2 = (int)((val >> 8) & 0xff);
-        int b3 = (int)(val >> 16);
+        int b3 = (int)((val >> 16) & 0xff);
+        int b4 = (int)(val >> 24);
 
         rc_find_context(dict_suffix, ctx * 16 + 13, &tpl_suffix_enc.back())->encode(b1);
         rc_find_context(dict_suffix, ctx * 16 + 14, &tpl_suffix_enc.back())->encode(b2);
-        rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_enc.back())->encode(b3);
+
+        if(b4 == 0 && b3 < 255)
+            rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_enc.back())->encode(b3);
+        else
+        {
+            rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_enc.back())->encode(255);
+            rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_enc.back())->encode(b3);
+            rc_find_context(dict_suffix, ctx * 16 + 15, &tpl_suffix_enc.back())->encode(b4);
+        }
     }
 }
 
@@ -455,12 +464,16 @@ void StructCompressor::compress_cart_column_as_numeric(model_col_type_t* mc, con
 
     for (auto& x : vals)
     {
-        x *= cart_working_multiplier;
+        int64_t x64 = x;
 
-        if (x >= 0)
-            x = ((x + resolution / 2) / resolution);
+        x64 *= (int) cart_working_multiplier;
+
+        if (x64 >= 0)
+            x64 = ((x64 + resolution / 2) / resolution);
         else
-            x = ((x - resolution / 2) / resolution);
+            x64 = ((x64 - resolution / 2) / resolution);
+
+        x = (int)x64;
     }
 
     int p_val = 0;
@@ -522,8 +535,8 @@ void StructCompressor::compress_loop_atom(const LoopEntry* le)
                 int bf = 0;
                 for (const auto& atom : aa.atoms)
                     bf += atom.B_factor;
-                bf += aa.atoms.size() / 2;
-                bf /= aa.atoms.size();
+                bf += (int) aa.atoms.size() / 2;
+                bf /= (int) aa.atoms.size();
             }
 
             is_constant_bf = true;
@@ -759,12 +772,12 @@ void StructCompressor::prepare_rc_tpl()
             tpl_centroid_id_enc.push_back(model_centroid_id_t(rce, i, nullptr, true));
 
     if (tpl_centroid_id_init_enc.empty())
-        for (int i = 0; i <= cart_comp.max_packed_atom_ctx; ++i)
+        for (int i = 0; i <= (int) cart_comp.max_packed_atom_ctx; ++i)
         {
             auto cc = cart_comp.get_centroid_counts(i);
 
             if (cc.first)
-                tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, cc.second, cc.first, true));
+                tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, (uint32_t) cc.second, cc.first, true));
             else
                 tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, 2, nullptr, true));     /// will not be used
         }
@@ -775,12 +788,12 @@ void StructCompressor::remake_init_tpls()
 {
     tpl_centroid_id_init_enc.clear();
 
-    for (int i = 0; i <= cart_comp.max_packed_atom_ctx; ++i)
+    for (int i = 0; i <= (int) cart_comp.max_packed_atom_ctx; ++i)
     {
         auto cc = cart_comp.get_centroid_counts(i);
 
         if (cc.first)
-            tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, cc.second, cc.first, true));
+            tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, (uint32_t) cc.second, cc.first, true));
         else
             tpl_centroid_id_init_enc.push_back(model_centroid_id_t(rce, 2, nullptr, true));     // will not be used
     }

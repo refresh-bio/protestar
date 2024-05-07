@@ -35,7 +35,9 @@ void PdbInput::parse() {
 				rows.second.clear();
 			}
 
-			entries2rows[type].push_back(p);
+			if (!minimal_mode || MINIMAL_SECTIONS.count(sectionName)) {
+				entries2rows[type].push_back(p);
+			}
 			
 			int lineLength = (int)(find(p, fileEnd, '\n') - p);
 			LoopEntry::Type localType = type;
@@ -70,7 +72,7 @@ void PdbInput::parse() {
 				auto& rows = entries2rows[type];
 
 				// omit empty sections
-				if (rows.empty()) {
+				if (rows.empty() ) {
 					continue;
 				}
 
@@ -112,7 +114,9 @@ void PdbInput::parse() {
 					++p;
 				}
 
-			} while (std::equal(p, p + SECTION_NAME_LEN, section));
+		//	} while (std::equal(p, p + SECTION_NAME_LEN, section));
+			} while (p != fileEnd && std::equal(p, p + SECTION_NAME_LEN, section));
+
 
 			if (need_ommit)
 				continue;

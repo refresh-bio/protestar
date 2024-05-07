@@ -366,3 +366,17 @@ FodyWeavers.xsd
 # make sure everything in data is not ignored
 !data/**
 /src/_old/.gitmodules
+/data/ligands/ligands.psa
+/data/apsd-cif-out
+/data/apsd-pdb-out
+/data/ligands-out
+/data/pdb-out
+/data/apsd-cif.psa
+/data/apsd-pdb.psa
+/data/cif.psa
+/data/ligands.psa
+/data/pdb.psa
+/data/cif-out
+/data/a
+/data/bin.bin0
+/data/bin.bin

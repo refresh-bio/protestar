@@ -375,6 +375,8 @@ bool parse_params_get(int argc, char** argv)
         else if (argv[i] == "--outdir"s && i + 1 < argc)
         {
             params.outdir = argv[i + 1];
+            if (params.outdir.back() != '/' && params.outdir.back() != '\\')
+                params.outdir.push_back('/');
             ++i;
         }
         else if (argv[i] == "--file"s && i + 1 < argc)

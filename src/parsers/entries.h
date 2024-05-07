@@ -75,6 +75,8 @@ public:
         case Type::Sigatm: return "SIGATM";
         case Type::Standard: return "<standard>";
         }
+
+        return "";
     }
 
     const std::vector<AbstractColumn*>& getColumns() const { return columns; }
