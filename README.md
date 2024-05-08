@@ -1,4 +1,9 @@
 # Protein Structures Archiver
+
+
+[![GitHub Actions CI](../../workflows/GitHub%20Actions%20CI/badge.svg)](../../actions/workflows/main.yml)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) 
+
 Protein Structures Archiver (ProteStAr) is a tool designed to compress collections of files describing protein structures.
 In the current version it supports PDB, mmCIF, PAE (prediction aligned errors in JSON format), confidence (in JSON format).
 

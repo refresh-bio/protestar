@@ -1,0 +1,128 @@
+name: GitHub Actions CI
+
+on:
+  push:
+    branches: [ master, develop ]
+    paths-ignore:
+      - '**.md'
+  workflow_dispatch:
+ 
+jobs:
+
+########################################################################################
+  make:
+    name: Make
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [ubuntu-latest, macOS-12]
+    runs-on: ['${{ matrix.machine }}']   
+   
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: make
+      run: | 
+        g++ --version
+        make -j
+
+    - name: tar artifacts
+      run: tar -cvf protestar.tar ./bin/protestar ./data/cmp.py ./data/ligands
+    
+    - uses: actions/upload-artifact@v2
+      with:
+        name: executable-artifact-${{ matrix.machine }}
+        path: ./protestar.tar    
+
+########################################################################################
+  pdb:
+    needs: make
+    name: PDB lossless
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [ubuntu-latest, macOS-12]
+        subdir: [ligands]
+    runs-on: ['${{ matrix.machine }}']
+    env: 
+      DATA: ./data
+      OUT: ./out
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: executable-artifact-${{ matrix.machine }}
+        path: ./
+        
+    - name: untar artifacts
+      run: |
+        tar -xf protestar.tar
+           
+    - name: lossless
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-lossless
+        ./bin/protestar add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}.psa
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-lossless --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-lossless ${DATA}/${{matrix.subdir}} 
+      
+    - name: minimal 
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-minimal
+        ./bin/protestar add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-minimal.psa --minimal
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}-minimal.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-minimal --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-minimal ${DATA}/${{matrix.subdir}}/minimal
+    
+    - name: lossy
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/pdb-lossy
+        ./bin/protestar add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-lossy.psa --lossy --max-error-bb 100 --max-error-sc 100
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}-lossy.psa --outdir ${OUT}/${{matrix.subdir}}/pdb-lossy --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/pdb-lossy ${DATA}/${{matrix.subdir}}/lossy_100_100
+        
+########################################################################################
+  cif:
+    needs: make
+    name: CIF 
+    strategy:
+      fail-fast: false
+      matrix:
+        machine: [ubuntu-latest, macOS-12]
+        subdir: [ligands]
+    runs-on: ['${{ matrix.machine }}']
+    env: 
+      DATA: ./data
+      OUT: ./out
+
+    steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: executable-artifact-${{ matrix.machine }}
+        path: ./
+        
+    - name: untar artifacts
+      run: tar -xf protestar.tar  
+      
+    - name: lossless
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-lossless
+        ./bin/protestar add -v 3 --type cif --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}.psa
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}.psa --outdir ${OUT}/${{matrix.subdir}}/cif-lossless --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-lossless ${DATA}/${{matrix.subdir}}/cif-lossless 
+        rm -r ${OUT}/${{matrix.subdir}}/cif-lossless
+        
+    - name: minimal
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-minimal
+        ./bin/protestar add -v 3 --type cif --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-minimal.psa --minimal
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}-minimal.psa --outdir ${OUT}/${{matrix.subdir}}/cif-minimal --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-minimal ${DATA}/${{matrix.subdir}}/minimal
+        rm -r ${OUT}/${{matrix.subdir}}/cif-minimal
+        
+    - name: lossy
+      run: |
+        mkdir -p ${OUT}/${{matrix.subdir}}/cif-lossy
+        ./bin/protestar add -v 3 --type pdb --indir ${DATA}/${{matrix.subdir}} --out ${OUT}/${{matrix.subdir}}-lossy.psa --lossy --max-error-bb 100 --max-error-sc 100
+        ./bin/protestar get -v 3 --in ${OUT}/${{matrix.subdir}}-lossy.psa --outdir ${OUT}/${{matrix.subdir}}/cif-lossy --type pdb --all
+        python3 ${DATA}/cmp.py ${OUT}/${{matrix.subdir}}/cif-lossy ${DATA}/${{matrix.subdir}}/lossy_100_100
+        rm -r ${OUT}/${{matrix.subdir}}/cif-lossy
