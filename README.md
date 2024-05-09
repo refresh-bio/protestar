@@ -4,6 +4,12 @@
 [![GitHub Actions CI](../../workflows/GitHub%20Actions%20CI/badge.svg)](../../actions/workflows/main.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) 
 
+![x86-64](https://img.shields.io/static/v1?label=%E2%80%8B&message=x86-64&color=yellow&logo=PCGamingWiki&logoColor=white)
+![Apple M1](https://img.shields.io/static/v1?label=%E2%80%8B&message=Apple%20M1&color=yellow&logo=Apple&logoColor=white)
+![Windows](https://img.shields.io/badge/%E2%80%8B-Windows-00A98F?logo=windows)
+![Linux](https://img.shields.io/static/v1?label=%E2%80%8B&message=Linux&color=00A98F&logo=linux&logoColor=white)
+![macOS](https://img.shields.io/badge/%E2%80%8B-macOS-00A98F?logo=apple)
+
 Protein Structures Archiver (ProteStAr) is a tool designed to compress collections of files describing protein structures.
 In the current version it supports PDB, mmCIF, PAE (prediction aligned errors in JSON format), confidence (in JSON format).
 
