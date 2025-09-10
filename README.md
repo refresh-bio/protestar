@@ -166,10 +166,11 @@ The data in apsd-data were selected from [AlphaFold Protein Structure Database](
 * The subset of ESM Atlas used in the experiments can be downloaded from [ESM subset](https://polslpl-my.sharepoint.com/:u:/g/personal/sdeorowicz_polsl_pl/EZlvCxYITEhNuXJeorf5vggBQlwCuBiEu6vzoUmEutAtoA?e=fYI6an) (1.6 GB file).
 
 ## Known issues and limitations
-* After decompression of CIF files, the formating of tables may be a bit different than the original one. The contents is, however, the same.
+* After decompression of CIF files, the formatting of tables may be a bit different than the original one. The contents is, however, the same.
 
 ## Citing
+Deorowicz, S., Gudyś, A. (2024) Efficient protein structure archiving using ProteStAr, Bioinformatics, vol. 40(7), btae428, [https://doi.org/10.1093/bioinformatics/btae428](https://doi.org/10.1093/bioinformatics/btae428).
 
-Deorowicz, S., Gudyś, A. (2023) Efficient protein structure archiving using ProteStAr, biorXiv preprint, [https://doi.org/10.1101/2023.07.20.549913](https://doi.org/10.1101/2023.07.20.549913).
-
+## Funding
+This work was supported by the National Science Centre, Poland, project [DEC-2022/45/B/ST6/03032].
 
